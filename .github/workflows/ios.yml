@@ -1,0 +1,29 @@
+# Сборка iOS-приложения на облачном Mac (GitHub Actions).
+# Результат — неподписанный Prigovor.ipa во вкладке Actions → последний запуск → Artifacts.
+# Подписывает и ставит его на iPhone Sideloadly (Windows) с твоим Apple ID.
+name: iOS build
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: XcodeGen
+        run: brew install xcodegen && xcodegen generate
+      - name: Build
+        run: |
+          xcodebuild -project Prigovor.xcodeproj -scheme Prigovor -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+      - name: Package IPA
+        run: |
+          mkdir Payload
+          cp -R build/Build/Products/Release-iphoneos/Prigovor.app Payload/
+          zip -qry Prigovor.ipa Payload
+          ls -la Prigovor.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Prigovor-ipa
+          path: Prigovor.ipa
