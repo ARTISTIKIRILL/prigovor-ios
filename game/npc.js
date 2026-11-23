@@ -192,6 +192,15 @@
         M(boxg(.03, .012, .2), mat('#2a1c10'), 0, .3, 0, head);
       } break;
       case 'kerchief': { const k = M(sph(.122, 18, 12, 0, Math.PI * .6), hc, 0, .08, -.02, head); k.scale.set(1, 1.1, 1.05); k.rotation.x = -.6; M(cyl(.09, .13, .14, 14), hc, 0, .02, -.035, head).scale.z = .6; } break;
+      case 'crown': { const gm = mat(o.hatC || '#d8b060', { metal: .9, rough: .25 }); M(cyl(.118, .118, .05, 20), gm, 0, .2, 0, head); for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; const p = M(new THREE.ConeGeometry(.018, .06, 4), gm, Math.cos(a) * .115, .23, Math.sin(a) * .115, head); } } break;
+      case 'ushanka': { // меховая шапка-ушанка: купол, отворот спереди, уши опущены
+        const fur = mat(o.hatC || '#4a3a2c', { rough: 1 }), top = mat(o.hatTop || '#2a2a30', { rough: .9 });
+        M(sph(.128, 18, 12, 0, Math.PI * 2, 0, Math.PI * .5), top, 0, .1, -.005, head).scale.set(1.02, .95, 1.05);
+        { const f = M(cyl(.135, .135, .07, 20), fur, 0, .165, 0, head); f.scale.z = 1.05; }
+        { const b = M(boxg(.24, .07, .05), fur, 0, .17, .115, head); b.rotation.x = -.25; }
+        for (const sd of [-1, 1]) { const e = M(boxg(.045, .13, .1), fur, sd * .125, .03, -.005, head); e.rotation.z = sd * .08; }
+        M(boxg(.25, .05, .05), fur, 0, .09, -.12, head);
+      } break;
     }
     for (let i = _accH; i < head.children.length; i++) head.children[i].userData.acc = 'head';
     for (let i = _lb0; i < _lb1; i++) head.children[i].userData.acc = null; // длинная борода — часть лица, у 3D-модели своя

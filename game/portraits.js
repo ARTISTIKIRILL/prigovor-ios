@@ -22,6 +22,47 @@
     bragin:     { sex: 'm', age: 39, skin: '#e0b090', hair: '#2a2420', hairStyle: 'short', eye: '#3a3a3a', hat: 'cap', hatC: '#262222', collar: 'police', cloth: '#2a2626', cloth2: '#8a2020', stubble: '#3a3430', jaw: 1 },
     lidia:      { sex: 'f', age: 29, skin: '#f4d6c4', hair: '#141010', hairStyle: 'bob', eye: '#3a5a4a', collar: 'flashy', cloth: '#3a1a3a', cloth2: '#e8e0d0', lips: '#a8242c', badge: true, blush: true },
     koch:       { sex: 'm', age: 66, skin: '#efd0ba', hair: '#e2ded6', hairStyle: 'side', eye: '#5a5a4a', collar: 'vest', cloth: '#3a3a40', cloth2: '#ece6da', roundGlasses: true, wrinkles: 2, chain: true },
+    // акт 2: монастырь в метель, 1640-е
+    pimen:      { sex: 'm', age: 74, skin: '#ecc8b0', hair: '#c8c4bc', hairStyle: 'side', beard: 'full', beardC: '#d8d4cc', eye: '#5a6a78', hat: 'hood', hatC: '#17151a', collar: 'hoodie', cloth: '#1c1a20', wrinkles: 2 },
+    iov:        { sex: 'm', age: 48, skin: '#e2b896', hair: '#2a2420', hairStyle: 'short', beard: 'full', beardC: '#2a2420', eye: '#3a3a30', hat: 'hood', hatC: '#121014', collar: 'hoodie', cloth: '#17151a', jaw: 1, wrinkles: 1 },
+    savva:      { sex: 'm', age: 19, skin: '#f0c8a8', hair: '#6a4a2a', hairStyle: 'messy', eye: '#4a5a3a', collar: 'hoodie', cloth: '#1e1c22', blush: true },
+    varsonofiy: { sex: 'm', age: 86, skin: '#ecc8b0', hair: '#ece8e0', hairStyle: 'side', beard: 'full', beardC: '#f0ece4', eye: '#c8ccd0', hat: 'hood', hatC: '#0e0c10', collar: 'hoodie', cloth: '#141216', wrinkles: 2 },
+    feodor:     { sex: 'm', age: 52, skin: '#e8a888', hair: '#7a5030', hairStyle: 'messy', beard: 'full', beardC: '#7a5030', eye: '#4a3a28', collar: 'hoodie', cloth: '#1e1c20', heavy: true, blush: true, wrinkles: 1 },
+    nikifor:    { sex: 'm', age: 34, skin: '#dca07c', hair: '#5a3a20', hairStyle: 'short', beard: 'full', beardC: '#5a3a20', eye: '#4a3a28', hat: 'cap', hatC: '#6a1a18', collar: 'police', cloth: '#8a2420', cloth2: '#c9a050', jaw: 1 },
+    evdokia:    { sex: 'f', age: 50, skin: '#eebca0', hair: '#5a3a22', hairStyle: 'updo', eye: '#5a4a38', hat: 'kerchief', hatC: '#c9a050', collar: 'uniformF', cloth: '#7a3a2a', cloth2: '#3a2a4a', heavy: true, lips: '#a04a48', blush: true, wrinkles: 1 },
+    // акт 3: полярная станция «Полынья-4», 1968
+    reshetov:   { sex: 'm', age: 54, skin: '#d8a888', hair: '#8a847a', hairStyle: 'short', beard: 'trim', beardC: '#9a948a', eye: '#4a5a6a', collar: 'vatnik', cloth: '#3a3e44', stubble: '#8a847a', wrinkles: 2, jaw: 1 },
+    tkach:      { sex: 'm', age: 38, skin: '#e8c0a0', hair: '#2a2622', hairStyle: 'slick', eye: '#3a4a3a', collar: 'vest', cloth: '#2e3a36', cloth2: '#d8d4c8', glasses: true },
+    nina:       { sex: 'f', age: 34, skin: '#f2d0b9', hair: '#3a2a1e', hairStyle: 'updo', eye: '#4a5a6a', collar: 'nurse', cloth: '#f0f0ea', cloth2: '#d8dde2', lips: '#b0605e' },
+    seva:       { sex: 'm', age: 26, skin: '#f0c8a8', hair: '#a87a4a', hairStyle: 'messy', eye: '#5a7a8a', hat: 'ushanka', hatC: '#5a4a3a', collar: 'vatnik', cloth: '#2a3a5a', glasses: true, blush: true },
+    taras:      { sex: 'm', age: 45, skin: '#e8b090', hair: '#3a2a20', hairStyle: 'short', beard: 'moust', beardC: '#3a2a20', eye: '#4a3a28', collar: 'apron', cloth: '#eae6dc', cloth2: '#d8d0c0', heavy: true, blush: true },
+    kuzmich:    { sex: 'm', age: 58, skin: '#c89070', hair: '#6a6258', hairStyle: 'messy', eye: '#3a3a30', hat: 'cap', hatC: '#2a2a28', collar: 'vatnik', cloth: '#3a3a30', stubble: '#7a7268', heavy: true, jaw: 1, wrinkles: 2 },
+    vera:       { sex: 'f', age: 30, skin: '#f0c8b0', hair: '#c8a060', hairStyle: 'bob', eye: '#5a6a4a', collar: 'vatnik', cloth: '#5a4a3a', lips: '#b0605e' },
+    bobrov:     { sex: 'm', age: 50, skin: '#e8b898', hair: '#4a4038', hairStyle: 'slick', eye: '#4a4a40', collar: 'suit3', cloth: '#3a3a3e', cloth2: '#8a2020', heavy: true, badge: true, wrinkles: 1 },
+    gordey:     { sex: 'm', age: 44, skin: '#c8a088', hair: '#1a1614', hairStyle: 'buzz', eye: '#2a2a2a', hat: 'hood', hatC: '#141214', collar: 'hoodie', cloth: '#141214', jaw: 1, scar: true },
+    // бал в Чернолесье
+    margaret:   { sex: 'f', age: 33, skin: '#f4e4e0', hair: '#141012', hairStyle: 'updo', eye: '#8a1a24', collar: 'uniformF', cloth: '#1a0e12', cloth2: '#7a1420', lips: '#8a1420', earrings: true, badge: false },
+    svetozarov: { sex: 'm', age: 52, skin: '#eec8ae', hair: '#c8b890', hairStyle: 'slick', beard: 'moust', beardC: '#c8b890', eye: '#4a5a6a', collar: 'suit3', cloth: '#e8e2d4', cloth2: '#4a6a8a', chain: true, wrinkles: 1 },
+    irina:      { sex: 'f', age: 40, skin: '#f2d4c0', hair: '#8a5a30', hairStyle: 'curly', eye: '#5a6a4a', collar: 'flashy', cloth: '#3a4a6a', cloth2: '#e8e0d0', lips: '#b05a5a', earrings: true },
+    sedoy:      { sex: 'm', age: 55, skin: '#dcb090', hair: '#c8c4bc', hairStyle: 'buzz', beard: 'moust', beardC: '#d8d4cc', eye: '#5a5a5a', hat: 'police', hatC: '#1a1a20', collar: 'police', cloth: '#1e1e26', cloth2: '#e8e4dc', scar: true, jaw: 1, wrinkles: 1 },
+    marfa:      { sex: 'f', age: 46, skin: '#e8b898', hair: '#6a5a4a', hairStyle: 'updo', eye: '#4a4a3a', hat: 'kosynka', hatC: '#8a7a6a', collar: 'apron', cloth: '#5a4a3a', cloth2: '#c8bca8', wrinkles: 1, blush: true },
+    yan:        { sex: 'm', age: 24, skin: '#f0d0b8', hair: '#2a1a12', hairStyle: 'messy', eye: '#3a2a1a', collar: 'vest', cloth: '#2a1a24', cloth2: '#e8e0d4' },
+    // акт 4: крепость ордена
+    rowenP:     { sex: 'm', age: 34, skin: '#deb08f', hair: '#5a4a3a', hairStyle: 'short', beard: 'trim', beardC: '#5a4a3a', eye: '#6c7a88', collar: 'guard', cloth: '#4a4c52', cloth2: '#6a6c72', jaw: 1 },
+    lukash:     { sex: 'm', age: 19, skin: '#f0c8a8', hair: '#8a6a3a', hairStyle: 'messy', eye: '#5a6a4a', collar: 'vatnik', cloth: '#5a4a32', blush: true },
+    herald:     { sex: 'm', age: 45, skin: '#f0d0b8', hair: '#c8b890', hairStyle: 'side', eye: '#5a7488', collar: 'whitecoat', cloth: '#efe8d8', cloth2: '#c9a050', wrinkles: 1 },
+    gervasiy:   { sex: 'm', age: 68, skin: '#e8c4a8', hair: '#d8d4cc', hairStyle: 'side', beard: 'full', beardC: '#e0dcd4', eye: '#5a5a5a', hat: 'hood', hatC: '#1a1a20', collar: 'hoodie', cloth: '#2a2a32', wrinkles: 2 },
+    varlam:     { sex: 'm', age: 50, skin: '#d8a080', hair: '#4a3a2a', hairStyle: 'messy', beard: 'full', beardC: '#4a3a2a', eye: '#3a3a2a', collar: 'vatnik', cloth: '#3a3028', heavy: true, wrinkles: 1 },
+    ulyana:     { sex: 'f', age: 38, skin: '#f0d0b8', hair: '#6a4a30', hairStyle: 'updo', eye: '#4a6a5a', hat: 'kerchief', hatC: '#e8e4dc', collar: 'nurse', cloth: '#e8e4dc', cloth2: '#d8dde2', lips: '#b06a6a' },
+    zoyaF:      { sex: 'f', age: 22, skin: '#e8c4ac', hair: '#2a1a14', hairStyle: 'bob', eye: '#6a4228', collar: 'apron', cloth: '#a8a49c', cloth2: '#5a6a8a', piercing: true, lips: '#b86a6a' },
+    sevaF:      { sex: 'm', age: 26, skin: '#e8c0a0', hair: '#a87a4a', hairStyle: 'messy', eye: '#5a7a8a', collar: 'vatnik', cloth: '#2a3a5a', glasses: true },
+    margaretP:  { sex: 'f', age: 33, skin: '#f4e4e0', hair: '#141012', hairStyle: 'updo', eye: '#8a1a24', collar: 'uniformF', cloth: '#1a0e12', cloth2: '#7a1420', lips: '#8a1420', earrings: true },
+    // финал: Замок Белого Полдня
+    king:       { sex: 'm', age: 50, skin: '#f0dcc8', hair: '#d8d0c0', hairStyle: 'side', beard: 'trim', beardC: '#d8d0c0', eye: '#6a8aa8', collar: 'whitecoat', cloth: '#f8f6f0', cloth2: '#d8b060' },
+    whiteCap:   { sex: 'm', age: 52, skin: '#e8c8a8', hair: '#6a6258', hairStyle: 'buzz', beard: 'moust', beardC: '#6a6258', eye: '#5a6a7a', collar: 'guard', cloth: '#f4f2ec', cloth2: '#d8b060', scar: true, jaw: 1, wrinkles: 1 },
+    medic:      { sex: 'm', age: 60, skin: '#e8c8b0', hair: '#8a8478', hairStyle: 'side', eye: '#5a5a4a', collar: 'suit3', cloth: '#2a2a32', cloth2: '#6a6a7a', glasses: true, wrinkles: 2 },
+    smotritelN: { sex: 'm', age: 68, skin: '#f1d0b8', hair: '#ece8e2', hairStyle: 'side', beard: 'trim', beardC: '#efebe5', eye: '#5d7488', collar: 'whitecoat', cloth: '#f4f1ea', cloth2: '#d9b46a', roundGlasses: true, wrinkles: 1 },
+    margaretN:  { sex: 'f', age: 33, skin: '#f8eeec', hair: '#141012', hairStyle: 'updo', eye: '#8a1a24', collar: 'uniformF', cloth: '#1a0e12', cloth2: '#7a1420', lips: '#8a1420', earrings: true },
     // старый состав (первые версии), оставлен для совместимости
     fedor: { sex: 'm', age: 45, skin: '#e3b08a', hair: '#5a3a22', hairStyle: 'short', beard: 'full', beardC: '#6b4428', eye: '#5b3a1e', hat: 'cap', hatC: '#3d2c1f', collar: 'vatnik', cloth: '#6d5638' },
     countess: { sex: 'f', age: 40, skin: '#f3d3c0', hair: '#2b1a14', hairStyle: 'updo', eye: '#3f6b4f', collar: 'uniformF', cloth: '#5e1a2a', cloth2: '#8a2a3e', lips: '#a8343c' }
@@ -160,6 +201,7 @@
       case 'nurse': return `<path d="M174 168 Q250 118 326 168 L320 194 Q250 174 180 194Z" fill="${k}"/><path d="M180 194 Q250 174 320 194" stroke="#c8d0d6" stroke-width="3" fill="none"/><path d="M200 160 Q250 136 300 160" stroke="#e4ecf2" stroke-width="4" fill="none"/>`;
       case 'kosynka': return `<path d="M150 222 Q148 128 250 116 Q352 128 350 222 Q300 190 250 188 Q200 190 150 222Z" fill="${k}"/><path d="M162 202 Q250 168 338 202" stroke="${d}" stroke-width="3" fill="none" opacity=".45"/><path d="M180 150 Q250 128 320 150" stroke="${l}" stroke-width="5" fill="none" opacity=".5"/><path d="M336 206 q32 10 42 42 q-26 -6 -42 -20Z" fill="${k}"/>`;
       case 'hood': return `<path d="M132 340 Q114 118 250 96 Q386 118 368 340 Q352 262 332 222 Q312 168 250 164 Q188 168 168 222 Q148 262 132 340Z" fill="${k}"/><path d="M166 228 Q188 170 250 166 Q312 170 334 228" stroke="${d}" stroke-width="12" fill="none"/><path d="M150 180 Q200 110 300 112" stroke="${l}" stroke-width="5" fill="none" opacity=".35"/>`;
+      case 'ushanka': return `<path d="M140 300 Q118 210 150 190 L176 196 L176 330 Q156 326 140 300Z M360 300 Q382 210 350 190 L324 196 L324 330 Q344 326 360 300Z" fill="${k}"/><path d="M152 196 Q150 104 250 98 Q350 104 348 196 Q300 178 250 178 Q200 178 152 196Z" fill="${sh(k, -.45)}"/><path d="M146 200 Q250 150 354 200 L350 232 Q250 196 150 232Z" fill="${k}"/><path d="M160 214 Q250 178 340 214" stroke="${l}" stroke-width="6" fill="none" opacity=".35"/>` + [0, 1, 2, 3, 4, 5, 6, 7].map(i => `<path d="M${164 + i * 24} ${212 - Math.sin(i / 7 * 3.14) * 18} l6 -10" stroke="${l}" stroke-width="3" opacity=".3"/>`).join('');
       case 'kerchief': return `<path d="M134 292 Q118 118 250 104 Q382 118 366 292 Q352 362 316 412 Q300 352 336 262 Q324 196 250 194 Q176 196 164 262 Q200 352 184 412 Q148 362 134 292Z" fill="${k}"/>`;
     }
     return '';

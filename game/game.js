@@ -48,7 +48,11 @@ const HERO_UI = {
   rowen: { c: '#a9bcd4', ic: '⚔', tag: 'Ровен', def: 'Ровен: военные и знать говорят ему правду' },
   miron: { c: '#9cc472', ic: '⚰', tag: 'Мирон', def: 'Мирон видит то, что пропустят живые' },
   agata: { c: '#f2a070', ic: '✚', tag: 'Агата', def: 'Агата чувствует ложь' },
-  tibo: { c: '#c9a6f2', ic: '♠', tag: 'Тибо', def: 'Тибо видит подделку' }
+  tibo: { c: '#c9a6f2', ic: '♠', tag: 'Тибо', def: 'Тибо видит подделку' },
+  // секретные герои (secret.js)
+  gordey: { c: '#d8794a', ic: '⛓', tag: 'Гордей', def: 'Под взглядом палача ломаются быстрее' },
+  evsey: { c: '#86b8ec', ic: '✒', tag: 'Евсей', def: 'Евсей помнит каждую петлю' },
+  margaret: { c: '#e0485e', ic: '♛', tag: 'Маргарет', def: 'Графиня чует кровь' }
 };
 const buffEl = document.getElementById('buff'); let buffT = 0;
 function showBuff(text, neg, hero) {
@@ -65,12 +69,12 @@ function heroOfCond(c) { const m = /(^|[&|])hero:(\w+)/.exec(c || ''); return m 
 let lastQuest = '';
 const curLoc = () => (window.WORLD ? WORLD.cur : 'train');
 const caseOf = id => (STORY.clues[id] && STORY.clues[id].cs) || 'train';
-const curCase = () => (curLoc() === 'boat' ? 'boat' : 'train');
+const curCase = () => (['boat', 'monast', 'polar', 'ball', 'fort', 'noon'].includes(curLoc()) ? curLoc() : 'train');
 function updateQuest() {
   const L = curLoc() === 'train' ? STORY : STORY.locs[curLoc()];
   qtEl.textContent = '◆ ' + (L.title || 'Приговор') + (L.noClock ? '' : ' · ' + gameClock());
   const q = L.quests.find(([c]) => cond(c)), t = q ? q[1] : '';
-  const leads = (L.leads || []).filter(([c]) => cond(c)).slice(0, 3);
+  const leads = (L.leads || []).filter(([c]) => cond(c)).slice(0, S.f.g_trial ? 0 : S.hero === 'evsey' ? 5 : 3); // испытание палача — без подсказок; Евсей помнит больше
   CUR_LEADS = leads;
   const lh = leads.filter(l => l[1] !== t).map(l => '<li>' + l[1] + '</li>').join('');
   if (lh !== updateQuest.lh) { leadsEl.innerHTML = lh; updateQuest.lh = lh; }
@@ -235,7 +239,8 @@ function spawnCast() {
 // ---------- мир: часы, анимация, события петли ----------
 function tickWorld(dt) {
   for (const n of NPCS) {
-    const vis = !n.hidden && (n.loc || 'train') === curLoc() && Math.abs(n.x - P.x) < 16 && (n.lv || 0) === (P.lv || 0);
+    // 26 м — дальше конца вагона, чтобы люди не «возникали из воздуха» посреди прохода
+    const vis = !n.hidden && (n.loc || 'train') === curLoc() && Math.abs(n.x - P.x) < 26 && (n.lv || 0) === (P.lv || 0);
     n.st.root.visible = vis;
     if (vis) animHuman(n.st, dt, P.x, P.z, D.on && D.npc === n && D.speaking);
     if (vis && n.brawl && !S.f.brawlDone && !(D.on && D.npc === n)) {
@@ -351,7 +356,8 @@ function nextLine() {
   if (D.i >= D.q.length) { finishNode(); return; }
   let [who, ex, text] = D.q[D.i];
   if (who && who === S.hero) who = 'det';
-  D.full = text; D.shown = 0; D.speaking = who && who !== 'det';
+  D.full = text; D.shown = 0; D.hold = 0; D.speaking = who && who !== 'det';
+  { const bx = document.getElementById('box'); bx.classList.remove('pop'); void bx.offsetWidth; bx.classList.add('pop'); }
   window.SFX && SFX.play('blip');
   chEl.innerHTML = ''; D.choosing = false; nextEl.style.display = 'block';
   if (who === 'det') {
@@ -378,7 +384,7 @@ function finishNode() {
   if (n.route) { const r = n.route.find(([c]) => cond(c)); runNode(r ? r[1] : n.route[n.route.length - 1][1]); return; }
   if (n.choices) {
     let opts = n.choices.filter(c => cond(c.if) && !(c.hide && cond(c.hide)));
-    const ex = opts.filter(c => c.exit); opts = opts.filter(c => !c.exit).slice(0, 4).concat(ex);
+    const ex = opts.filter(c => c.exit); opts = opts.filter(c => !c.exit).slice(0, n.many ? 8 : 4).concat(ex); // many — выбор героя, там до шести имён
     if (opts.length) { showChoices(opts); return; }
   }
   if (n.go) { runNode(n.go); return; }
@@ -416,9 +422,11 @@ function showEvidence(ev) {
   if (!D.evUsed || D.node === STORY.dialogs.remez.nodes.ev1 || D.node.evReset) D.evUsed = [];
   const cc = curCase();
   const free = S.clues.filter(id => caseOf(id) === cc && (!D.evUsed.includes(id) && !STORY.clues[id].lily || ev.ok.includes(id) && !D.evUsed.includes(id)));
-  const good = free.filter(id => ev.ok.includes(id)), bad = free.filter(id => !ev.ok.includes(id)).sort(() => Math.random() - .5).slice(0, good.length ? 2 : 3);
+  const good = free.filter(id => ev.ok.includes(id)), bad = free.filter(id => !ev.ok.includes(id)).sort(() => Math.random() - .5).slice(0, S.hero === 'gordey' && good.length ? 1 : good.length ? 2 : 3); // при палаче подозреваемый ломается быстрее
   const ids = good.slice(0, 2).concat(bad).sort(() => Math.random() - .5);
-  const opts = ids.map(id => ({ t: '<b>' + STORY.clues[id].n + '</b>', evid: id, ok: ev.ok.includes(id), next: ev.next, fail: ev.fail }));
+  const blood = id => S.hero === 'margaret' && ev.ok.includes(id) && /кров/i.test(STORY.clues[id].t + STORY.clues[id].n); // графиня по капле крови знает, чья она
+  if (window.secretEvidence) secretEvidence(ev, ids.some(blood), good.length);
+  const opts = ids.map(id => ({ t: '<b>' + STORY.clues[id].n + '</b>' + (blood(id) ? ' <i class="blood" title="Графиня чует кровь">●</i>' : ''), evid: id, ok: ev.ok.includes(id), next: ev.next, fail: ev.fail }));
   opts.push({ t: 'Мне нечего предъявить.', evid: null, ok: false, next: ev.next, fail: ev.fail });
   showChoices(opts, ev.q);
 }
@@ -436,9 +444,14 @@ function dlgKey(e) {
   }
   if (['KeyE', 'KeyF', 'Space', 'Enter'].includes(e.code)) { e.preventDefault(); dlgAdvance(); }
   if (e.code === 'Escape' && canExit()) { e.preventDefault(); closeDialog(); }
+  if (e.code === 'Tab') { e.preventDefault(); dlgSkip(); }
 }
 function canExit() { return !!(D.npc || D.solo) && !(D.node && D.node.evidence); }
 document.getElementById('dlgx').addEventListener('pointerdown', e => e.stopPropagation());
+// «Пропустить»: пролистывает реплики до ближайшего выбора или конца сцены (эффекты узлов срабатывают как обычно)
+function dlgSkip() { for (let k = 0; k < 400 && D.on && !D.choosing && !(D.node && D.node.evidence); k++) { D.shown = D.full.length; nextLine(); } }
+document.getElementById('dlgskip').addEventListener('pointerdown', e => e.stopPropagation());
+document.getElementById('dlgskip').addEventListener('click', e => { e.stopPropagation(); dlgSkip(); });
 document.getElementById('dlgx').addEventListener('click', e => { e.stopPropagation(); if (canExit()) closeDialog(); });
 document.getElementById('box').addEventListener('click', e => { e.stopPropagation(); dlgAdvance(true); });
 dlgEl.addEventListener('click', () => { if (!D.choosing) dlgAdvance(true); });
@@ -450,8 +463,18 @@ function closeDialog() {
 }
 const headW = new THREE.Vector3();
 function dlgCamera(dt) {
-  if (D.shown < D.full.length) { D.shown = Math.min(D.full.length, D.shown + dt * 48); txtEl.textContent = D.full.slice(0, Math.floor(D.shown)); }
+  // печать с паузами на знаках препинания — реплика звучит живее
+  if (D.shown < D.full.length) {
+    if (D.hold > 0) D.hold -= dt;
+    else {
+      const a = Math.floor(D.shown); D.shown = Math.min(D.full.length, D.shown + dt * 52); const b = Math.floor(D.shown);
+      for (let i = a; i < b; i++) { const ch = D.full[i], nx = D.full[i + 1]; if (nx !== ' ') continue; if ('.!?…'.includes(ch)) { D.shown = i + 1; D.hold = .3; break; } if (',;:—'.includes(ch)) { D.shown = i + 1; D.hold = .1; break; } }
+    }
+    txtEl.textContent = D.full.slice(0, Math.floor(D.shown));
+  }
+  { const talking = D.on && !D.choosing && D.shown < D.full.length && D.hold <= 0; porEl.classList.toggle('talk', talking && !porEl.classList.contains('dim')); porR.classList.toggle('talk', talking && !porR.classList.contains('dim')); }
   document.getElementById('dlgx').style.display = canExit() ? 'block' : 'none';
+  document.getElementById('dlgskip').style.display = D.on && !D.choosing && D.q && D.i < D.q.length - 1 ? 'block' : 'none';
   if (!D.npc) return;
   D.npc.st.head.getWorldPosition(headW);
   const dx = headW.x - P.x, dz = headW.z - P.z, dist = Math.hypot(dx, dz);
@@ -569,7 +592,7 @@ function startGame() {
   fetch('cs/index.html', { method: 'HEAD' }).then(r => {
     if (!r.ok) { fallback(); return; }
     const fr = document.createElement('iframe');
-    fr.id = 'csFrame'; fr.src = 'cs/index.html?embed=1&v=56'; fr.allow = 'autoplay; fullscreen';
+    fr.id = 'csFrame'; fr.src = 'cs/index.html?embed=1&v=61'; fr.allow = 'autoplay; fullscreen';
     fr.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:0;z-index:9999;background:#000';
     document.body.appendChild(fr);
     const onMsg = e => {
@@ -633,7 +656,7 @@ const CHASE = {
     this.st.root.position.set(this.x, 0, this.z);
     this.st.root.rotation.y = this.state === 'corner' ? (P.x > this.x ? FACE['+x'] : FACE['-x']) : (this.dir > 0 ? FACE['+x'] : FACE['-x']);
     animHuman(this.st, dt, P.x, P.z, false, this.state === 'run' ? this.speed : 0);
-    this.st.root.visible = Math.abs(this.x - P.x) < 16;
+    this.st.root.visible = Math.abs(this.x - P.x) < 26;
   }
 };
 
@@ -646,7 +669,7 @@ const PATROL = {
     const on = this.active();
     const seated = NPCS.find(q => q.id === 'remez'); if (seated) seated.hidden = on;
     if (on && !this.on) { this.x = XB + 1; this.dir = 1; this.wait = 0; this.sus = 0; toastMsg = 'Ремез встал и обходит вагон Б. Не попадись ему на глаза!'; toastT = 3.5; }
-    this.on = on; this.st.root.visible = on && Math.abs(this.x - P.x) < 16;
+    this.on = on; this.st.root.visible = on && Math.abs(this.x - P.x) < 26;
     eyeEl.style.display = 'none';
     if (!on) return;
     let moving = 0;

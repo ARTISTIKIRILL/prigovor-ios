@@ -14,6 +14,9 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:
 #app{position:fixed;inset:0}
 canvas{display:block;width:100%;height:100%}
 #fade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none}
+/* «Смотреть» нажали раньше, чем догрузились герои: тихий индикатор внизу тёмного экрана */
+#wait{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);width:min(320px,70vw);text-align:center;color:#cbb88f;font:13px/1.4 "PT Sans",sans-serif;letter-spacing:.04em;pointer-events:none;z-index:5}
+#wait p{margin:0 0 8px;opacity:.85}#wait .wbar{height:2px;background:#ffffff1a;border-radius:2px;overflow:hidden}#wait i{display:block;height:100%;width:0;background:#d9b06a;transition:width .3s}
 #subs{position:absolute;left:50%;bottom:max(6%,env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(86%,900px);text-align:center;pointer-events:none;opacity:0;transition:opacity .25s}
 #subs .who{display:inline-block;margin-bottom:.35em;background:rgba(5,4,8,.62);padding:.15em .5em;border-radius:3px;font-family:var(--display);font-size:clamp(.7rem,1.6vw,.9rem);letter-spacing:.12em;color:var(--gold);text-transform:uppercase;margin-bottom:.2em;text-shadow:0 1px 4px #000}
 #subs .line{display:inline;font-size:clamp(1rem,2.6vw,1.45rem);line-height:1.45;background:rgba(5,4,8,.62);padding:.12em .45em;border-radius:4px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
@@ -55,6 +58,7 @@ canvas{display:block;width:100%;height:100%}
 <div id="app">
   <canvas id="c"></canvas>
   <div id="fade"></div>
+  <div id="wait" hidden><p id="waitTxt"></p><div class="wbar"><i id="waitBar"></i></div></div>
   <div id="labels"></div>
   <div id="ask"></div>
   <div id="train"></div>
@@ -120,8 +124,8 @@ const LINES={
 const VERDICT={
  knight:{read:['Сэр Ровен. Поджог крепости собственного ордена.','Sir Rowen. Arson of his own order’s fortress.'],ans:['Я сжёг то, что вы там прятали.','I burned what you were hiding there.'],rep:['Вот и поищете теперь чужое.','Now you will search for what others hide.'],y2008:['2008 · Отставной майор, охранник','2008 · Retired major, security guard']},
  gravedigger:{read:['Мирон Глина. Осквернение могил благородных господ.','Miron Glina. Desecration of noble graves.'],ans:['Я их не осквернял. Я их читал.','I did not desecrate them. I read them.'],rep:['Теперь будете читать живых.','Now you will read the living.'],y2008:['2008 · Сторож кладбища','2008 · Cemetery watchman']},
- nun:{read:['Сестра Агата. Ересь. Нарушение тайны исповеди.','Sister Agata. Heresy. Breaking the seal of confession.'],ans:['Есть исповеди, которые нельзя хранить.','Some confessions must not be kept.'],rep:['И приговоры, которые нельзя отменить.','And some sentences cannot be undone.'],y2008:['2008 · Медсестра','2008 · Nurse']},
- forger:{read:['Тибо Лис. Чеканка фальшивых крон.','Tibo Lis. Minting false crowns.'],ans:['Фальшивых? Вы бы сравнили с казёнными.','False? You should compare them with the treasury’s.'],rep:['Сравним. У вас будет время.','We shall. You will have time.'],y2008:['2008 · Карточный шулер с чужим паспортом','2008 · Card sharp with someone else’s passport']},
+ nun:{read:['Сестра Агата. Ересь. Нарушение тайны исповеди.','Sister Agata. Heresy. Breaking the seal of confession.'],ans:['Есть исповеди, которые нельзя хранить.','Some confessions must not be kept.'],rep:['И приговоры, которые нельзя отменить.','And some sentences cannot be undone.'],y2008:['2008 · Монахиня','2008 · Nun']},
+ forger:{read:['Тибо Лис. Чеканка фальшивых крон.','Tibo Lis. Minting false crowns.'],ans:['Фальшивых? Вы бы сравнили с казёнными.','False? You should compare them with the treasury’s.'],rep:['Сравним. У вас будет время.','We shall. You will have time.'],y2008:['2008 · Шулер, плут','2008 · Card sharp, rogue']},
 };
 const UI={
  start:['Пролог. Палата Милосердия зачитывает приговор четверым. Смотреть со звуком.','Prologue. The Chamber of Mercy reads the sentence of four. Best with sound on.'],
@@ -435,12 +439,12 @@ const FILES={"warden": ["warden_v2_0.txt"], "knight": ["knight_v3_0.txt"], "grav
 const PBR={"knight": {"Extra_MAT": "knight_mr_Extra_MAT.png", "Extra_MAT_Metal": "knight_mr_Extra_MAT_Metal.png"}, "gravedigger": {"Kit_MAT": "gravedigger_mr_Kit_MAT.png", "Kit_MAT_Metal": "gravedigger_mr_Kit_MAT_Metal.png"}, "nun": {"Kit_MAT": "nun_mr_Kit_MAT.png"}, "forger": {"Kit_MAT": "forger_mr_Kit_MAT.png", "Kit_MAT_Metal": "forger_mr_Kit_MAT_Metal.png"}, "executioner": {"Kit_MAT": "executioner_mr_Kit_MAT.png", "Kit_MAT_Metal": "executioner_mr_Kit_MAT_Metal.png"}, "palata_knight": {"Kit_MAT": "palata_knight_mr_Kit_MAT.png", "Kit_MAT_Metal": "palata_knight_mr_Kit_MAT_Metal.png", "Extra_MAT": "palata_knight_mr_Extra_MAT.png"}, "priest": {"Cassock_MAT": "priest_mr_Cassock_MAT.png", "Stole_MAT": "priest_mr_Stole_MAT.png", "Kit_MAT": "priest_mr3_Kit_MAT.png", "Kit_MAT_Metal": "priest_mr_Kit_MAT_Metal.png"}};
 const SIZES={"warden_v2_0": 5852112, "knight_v3_0": 7093228, "gravedigger_v3_0": 7390232, "nun_v4_0": 11779056, "forger_v3_0": 8025272, "executioner_v3_0": 11157792, "palata_knight_v3_0": 7541864, "priest_v6_0": 8916508, "warden_idle": 1484072, "knight_walk": 516224, "gravedigger_walk": 597400, "nun_walk": 376084, "forger_walk": 381000, "executioner_walk": 561516, "palata_knight_idle": 2118264, "knight_walk_b": 1032448, "priest_idle": 3338728, "priest_walk": 376376, "knight_walk_proud": 384584, "knight_walk_sneak": 458284, "gravedigger_walk_hurt": 510904, "gravedigger_walk_sneak": 558220, "nun_walk_sneak": 416964, "forger_walk_proud": 360956, "forger_walk_sneak": 422784};
 // модели лежат в cs/glb/*.glb.gz (tools/glb/convert.py): glb разбирается в разы быстрее FBX, а все файлы качаются параллельно
-const GZS={"warden_v2_0": 2824152, "knight_v3_0": 3651261, "gravedigger_v3_0": 4288628, "nun_v4_0": 4479315, "forger_v3_0": 3957643, "executioner_v3_0": 8522053, "palata_knight_v3_0": 3928987, "priest_v6_0": 3648938, "warden_idle": 271273, "knight_walk": 37405, "gravedigger_walk": 81115, "nun_walk": 24385, "forger_walk": 32453, "executioner_walk": 35768, "palata_knight_idle": 126293, "priest_idle": 605570, "priest_walk": 29036, "knight_walk_proud": 37755, "knight_walk_sneak": 63015, "gravedigger_walk_hurt": 127544, "gravedigger_walk_sneak": 146528, "nun_walk_sneak": 33731, "forger_walk_proud": 27901, "forger_walk_sneak": 43962, "knight_idle": 126281, "gravedigger_idle": 271273, "nun_idle": 313880, "forger_idle": 605581, "executioner_idle": 443237};
+const GZS={"warden_v2_0": 2796997, "knight_v3_0": 3646356, "gravedigger_v3_0": 4287587, "nun_v4_0": 4468294, "forger_v3_0": 3954532, "executioner_v3_0": 8514981, "palata_knight_v3_0": 3940761, "priest_v6_0": 3644747, "warden_idle": 271273, "knight_walk": 37405, "gravedigger_walk": 81115, "nun_walk": 24385, "forger_walk": 32453, "executioner_walk": 35768, "palata_knight_idle": 126293, "priest_idle": 605570, "priest_walk": 29036, "knight_walk_proud": 37755, "knight_walk_sneak": 63015, "gravedigger_walk_hurt": 127544, "gravedigger_walk_sneak": 146528, "nun_walk_sneak": 33731, "forger_walk_proud": 27901, "forger_walk_sneak": 43962, "knight_idle": 126281, "gravedigger_idle": 271273, "nun_idle": 313880, "forger_idle": 605581, "executioner_idle": 443237};
 const TOTAL=Object.values(GZS).reduce((a,b)=>a+b,0)||1;let LOADED=0;
-const HIDE={knight:['Greatsword','Paladin_J_Nordstrom_Shield'],gravedigger:['X_Shovel'],nun:['X_Cross'],forger:['X_Cane'],executioner:['BattleAxe_GEO'],palata_knight:[],priest:[],warden:[]};
+const HIDE={knight:['Greatsword','Paladin_J_Nordstrom_Shield'],gravedigger:['X_Shovel'],nun:['X_Cross'],forger:['X_Cane'],executioner:['BattleAxe_GEO'],palata_knight:[],priest:['X_Staff','X_Weapon'],warden:[]};
 const DBL=['Cape','PlateSkirt','CrotchMail','NeckGuards','Crown'];
 // модели кэшируются в браузере: со второго запуска пролог открывается почти сразу (имена файлов с версиями)
-const MODEL_CACHE='prigovor-models-v2';let _mc=null;
+const MODEL_CACHE='prigovor-models-v3';let _mc=null;
 async function modelCache(){if(_mc!==null)return _mc;try{_mc=window.caches?await caches.open(MODEL_CACHE):false;}catch(e){_mc=false;}return _mc;}
 async function fetchTxt(f){const mc=await modelCache();let res=null;if(mc)try{res=await mc.match(f);}catch(e){res=null;}
  if(!res){res=await fetch(f);if(!res.ok)throw new Error(f+' '+res.status);if(mc)try{mc.put(f,res.clone()).catch(()=>{});}catch(e){}}const rd=res.body.getReader();const parts=[];const dec=new TextDecoder();
@@ -465,10 +469,35 @@ function fixGlb(root,clips){
   nm.name=o.name;nm.userData=o.userData;nm.position.copy(o.position);nm.quaternion.copy(o.quaternion);nm.scale.copy(o.scale);const par=o.parent;par.add(nm);o.children.filter(c=>!c.isMesh).forEach(c=>nm.add(c));par.remove(o);}
  root.traverse(o=>{if(o.userData.oname!==undefined)o.name=o.userData.oname;});
  // экспорт вписал матрицу привязки в inverseBindMatrices — сам меш должен стоять в нуле, иначе (у Смотрителя ×100) она применится дважды
- root.traverse(o=>{if(o.isSkinnedMesh){o.position.set(0,0,0);o.quaternion.identity();o.scale.set(1,1,1);o.bind(o.skeleton,new THREE.Matrix4());}});}
-async function model(name){const r=await gltfL.parseAsync(await bin(name),'');const g=r.scene.children.length===1?r.scene.children[0]:r.scene;g.parent&&g.parent.remove(g);fixGlb(g,r.animations);g.animations=r.animations;return g;}
+ root.traverse(o=>{if(o.isSkinnedMesh){o.position.set(0,0,0);o.quaternion.identity();o.scale.set(1,1,1);o.bind(o.skeleton,new THREE.Matrix4());}});
+ // части одного героя со своими копиями скелета → один общий скелет: меньше пересчёта костей и загрузок на видеокарту каждый кадр
+ {const sk=[];const same=(a,b)=>{if(a.bones.length!==b.bones.length)return false;for(let i=0;i<a.bones.length;i++){if(a.bones[i]!==b.bones[i])return false;const x=a.boneInverses[i].elements,y=b.boneInverses[i].elements;for(let k=0;k<16;k++)if(Math.abs(x[k]-y[k])>1e-5)return false;}return true;};
+  root.traverse(o=>{if(!o.isSkinnedMesh)return;const s=sk.find(q=>same(q,o.skeleton));if(s)o.skeleton=s;else sk.push(o.skeleton);});}
+}
+// телефон: у героев по 100–200 тыс. треугольников, мобильная видеокарта их не тянет. Облегчаем сетку (meshoptimizer убирает треугольники,
+// вершины с кожей и весами костей остаются те же) — на маленьком экране разницы не видно. ?lite=0 / ?lite=1 — принудительно
+const LITE=/[?&]lite=1/.test(location.search)||(!/[?&]lite=0/.test(location.search)&&(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform))));
+let _ms=null;function simplifier(){return _ms||(_ms=import('https://cdn.jsdelivr.net/npm/meshoptimizer@0.21.0/meshopt_simplifier.module.js').then(async m=>{await m.MeshoptSimplifier.ready;return m.MeshoptSimplifier;}).catch(()=>null));}
+if(LITE)simplifier();
+const LITE_INFO=[];
+function liteMesh(root,S,name){let a=0,b=0;const t0=performance.now();
+ root.traverse(o=>{if(!o.isMesh)return;const geo=o.geometry,pa=geo.attributes.position;if(!geo.index||pa.isInterleavedBufferAttribute||pa.itemSize!==3||!(pa.array instanceof Float32Array))return;
+  const src=geo.index.array,grs=geo.groups.length?geo.groups:[{start:0,count:src.length,materialIndex:0}];const out=new Uint32Array(src.length);let k=0;const ng=[];
+  for(const gr of grs){const sub=new Uint32Array(src.subarray(gr.start,gr.start+gr.count));a+=sub.length/3;let res=sub;
+   if(sub.length>=1500){const [r2]=S.simplify(sub,pa.array,3,Math.floor(sub.length*LITE_RATIO/3)*3,LITE_ERR,['Sparse']);if(r2.length>=3)res=r2;}
+   out.set(res,k);ng.push({start:k,count:res.length,materialIndex:gr.materialIndex});k+=res.length;b+=res.length/3;}
+  geo.setIndex(new THREE.BufferAttribute(out.slice(0,k),1));const hadG=geo.groups.length>0;geo.clearGroups();if(hadG)ng.forEach(g=>geo.addGroup(g.start,g.count,g.materialIndex));});
+ LITE_INFO.push([name,Math.round(a),Math.round(b),Math.round(performance.now()-t0)]);}
+const LITE_RATIO=.3,LITE_ERR=.004;
+async function model(name){const buf=await bin(name);const r=await gltfL.parseAsync(buf,'');if(/_v\d+_\d+$/.test(name)){WAIT_STAGE++;prog();}const g=r.scene.children.length===1?r.scene.children[0]:r.scene;g.parent&&g.parent.remove(g);fixGlb(g,r.animations);
+ if(LITE&&/_v\d+_\d+$/.test(name)){const S=await simplifier();if(S)liteMesh(g,S,name);}g.animations=r.animations;return g;}
 function parseB64(s){s=atob(s.trim());const u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return loader.parse(u.buffer,'');}
-function prog(){const p=clamp(LOADED/TOTAL,0,1);$('#prog').style.width=(p*100).toFixed(1)+'%';$('#progTxt').textContent=T(...UI.load)+' '+Math.round(p*100)+'%';}
+let WAIT_STAGE=0,WAIT_P=0;
+function prog(){const p=clamp(LOADED/TOTAL,0,1);$('#prog').style.width=(p*100).toFixed(1)+'%';$('#progTxt').textContent=T(...UI.load)+' '+Math.round(p*100)+'%';
+ // загрузка 0–70%, подготовка сцены 70–100%: разбор моделей, шейдеры, текстуры на видеокарту
+ const w=p<1?p*.7:.7+.3*Math.min(1,Math.max(WAIT_P,WAIT_STAGE/9*.4));$('#waitBar').style.width=(w*100).toFixed(1)+'%';$('#waitTxt').textContent=(p<1?T('Загружаю героев…','Loading the heroes…'):T('Готовлю сцену…','Preparing the scene…'))+' '+Math.round(w*100)+'%';}
+addEventListener('error',e=>{if(!loadedOK&&!$('#wait').hidden)$('#waitTxt').textContent=T('Ошибка: ','Error: ')+(e.message||e.type);});
+addEventListener('unhandledrejection',e=>{if(!loadedOK&&!$('#wait').hidden)$('#waitTxt').textContent=T('Ошибка: ','Error: ')+((e.reason&&e.reason.message)||e.reason);});
 const MESHNAMES={};
 class Hero{
  constructor(id,g,idle,walk,height,alts){
@@ -597,6 +626,9 @@ async function loadHero(id,height){
  const alts={};for(const [mode,f] of Object.entries(WALKSET[id]||{})){try{alts[mode]=lockRoot((await model(f)).animations[0]||null);}catch(e){}}
  // у MPFB-Смотрителя свои длины костей: из чужих клипов берём только повороты (и высоту бёдер)
  if(id==='warden'){const own=c=>{if(c)c.tracks=c.tracks.filter(tr=>!/\.(position|scale)$/.test(tr.name)||(/Hips\.position$/.test(tr.name)&&c===idleW));return c;};own(idleW);own(walk);}
+ // отсечение по кадру: сфера вокруг всего героя (поза привязки скелета для этого не годится) — кто не в кадре, того не рисуем
+ {g.updateMatrixWorld(true);const c=new THREE.Vector3(0,height*.5,0).applyMatrix4(g.parent?g.parent.matrixWorld:new THREE.Matrix4());
+  g.traverse(o=>{if(!o.isMesh)return;const s=o.matrixWorld.getMaxScaleOnAxis()||1;o.geometry.boundingSphere=new THREE.Sphere(c.clone().applyMatrix4(o.matrixWorld.clone().invert()),height*1.25/s);o.frustumCulled=true;});}
  return new Hero(id,g,idleW||idle0,walk,height,alts);
 }
 
@@ -669,7 +701,7 @@ function resetHall(wardenAt){
  const g=H.executioner;g.mode='walk';g.root.visible=true;g.root.position.copy(G_POS);g.root.rotation.y=g.yawT=-.45;g.setWalk(false);g.ik.R.fn=null;g.ik.R.w=g.ik.R.wt=0;g.ik.L.w=g.ik.L.wt=0;g.pitch=g.pitchT=.15;
  warden.root.visible=true;if(wardenAt==='door'){warden.root.position.copy(W_DOOR);warden.root.rotation.y=warden.yawT=Math.PI*.75;warden.setUnroll(0);}else{warden.root.position.copy(W_LECT);warden.root.rotation.y=warden.yawT=Math.PI;warden.setUnroll(1);}warden.walking=false;warden.pitch=warden.pitchT=0;
  guards[0].root.visible=guards[1].root.visible=true;guards[0].root.position.set(-3.4,0,-.3);guards[0].root.rotation.y=guards[0].yawT=.3;guards[1].root.position.set(3.7,0,.4);guards[1].root.rotation.y=guards[1].yawT=-.35;guards.forEach(q=>q.walking=false);
- if(H.priest){const p=H.priest;p.root.visible=true;p.mode='walk';p.root.position.set(-1.95,0,5.05);p.root.rotation.y=p.yawT=Math.PI+.3;p.setWalk(false);p.pitch=p.pitchT=.05;}
+ if(H.priest){const p=H.priest;p.root.visible=true;p.mode='walk';p.root.position.set(-1.95,0,5.05);p.root.rotation.y=p.yawT=Math.PI+.3;p.setWalk(false);p.pitch=p.pitchT=0;}
  const cm=CROW_MESH();if(cm)cm.visible=true;crow.root.visible=false;S.crowFly=null;
  S.coinMode='tibo';coin.visible=true;halos(false);
 }
@@ -785,7 +817,7 @@ document.addEventListener('visibilitychange',()=>{if(!SND.ctx)return;if(document
 
 /* ================= loop ================= */
 const clock=new THREE.Clock();
-function frame(){const dt=Math.min(clock.getDelta(),.05);
+function frame(){const dt=Math.min(clock.getDelta(),.1); // до 10 кадров/с время катсцены идёт по-настоящему (было .05: на слабом телефоне 8 секунд тянулись 13)
  if(started&&!S.paused){S.t+=dt;const sh=SH[S.shot];if(sh){sh.update(S.t,dt);if(sh.dur&&S.t>=sh.dur)go(S.shot+1);}}else if(started&&SH[S.shot])SH[S.shot].update(S.t,0.0001);
  const t=clock.elapsedTime;
  for(const a of ACTORS)a.update(dt,t);warden&&warden.update(dt,t);guards&&guards.forEach(g=>g.update(dt));updCrow(dt);
@@ -801,7 +833,8 @@ function frame(){const dt=Math.min(clock.getDelta(),.05);
   hg.glow.material.opacity=.26+Math.sin(t*2.1)*.04;const p=hg.dust.geometry.attributes.position;for(let i=0;i<p.count;i++){let y=p.getY(i)+dt*.12;if(y>3.6)y=0;p.setY(i,y);p.setX(i,p.getX(i)+Math.sin(t+i)*dt*.03);}p.needsUpdate=true;}if(DEBUG&&$('#dshot'))$('#dshot').textContent='shot '+S.shot+' t '+S.t.toFixed(1)+' hero '+S.hero;
  if(subState.ru&&now()>subState.until)hideSub();
  cam.position.copy(camP);if(S.shake>.001){cam.position.x+=(Math.random()-.5)*S.shake;cam.position.y+=(Math.random()-.5)*S.shake;S.shake*=Math.exp(-dt*5);}cam.lookAt(camT);placeLabels();
- ((window.GFX&&!GFX.bloom)?r.render(scene,cam):composer.render());requestAnimationFrame(frame);}
+ // пока герои грузятся, кадр закрыт заставкой или темнотой: не рисуем, иначе каждый новый герой тут же собирает шейдеры и замораживает телефон
+ if(loadedOK)((window.GFX&&!GFX.bloom)?r.render(scene,cam):composer.render());requestAnimationFrame(frame);}
 let started=false;
 
 /* ================= debug ================= */
@@ -844,15 +877,23 @@ function loadAll(){if(loading)return loading;prog();loading=(async()=>{
   H.priest=await P.priest;ACTORS.push(H.priest);
   {const wm=await P.warden;warden=new WardenM(wm,warden);}
   resetHall('door');
-  r.compile(scene,cam);
+  // шейдеры собираем в фоне (KHR_parallel_shader_compile): на телефоне синхронная сборка замораживала экран на десятки секунд
+  WAIT_P=.42;prog();await new Promise(q=>setTimeout(q,30));
+  {const flip=[];scene.traverse(o=>{if(!o.visible){o.visible=true;flip.push(o);}}); // всё, что появится позже (лестница, часы, оружие), — тоже
+   if(r.compileAsync)await r.compileAsync(scene,cam);else r.compile(scene,cam);
+   // текстуры на видеокарту порциями — между порциями экран успевает обновиться
+   const tx=new Set();scene.traverse(o=>{if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{for(const k in m){const v=m[k];if(v&&v.isTexture&&!v.isRenderTargetTexture)tx.add(v);}});});
+   WAIT_P=.55;prog();let i=0;for(const x of tx){try{r.initTexture(x);}catch(e){}if(++i%4===0){WAIT_P=.55+.43*i/tx.size;prog();await new Promise(q=>setTimeout(q,0));}}
+   flip.forEach(o=>{o.visible=false;});}
+  composer.render(); // прогрев за тёмным экраном: шейдеры свечения и буферы кадра собираются здесь, а не в первом кадре пролога
   loadedOK=true;$('#progTxt').textContent=T(...UI.ready);$('#prog').style.width='100%';
   if(DEBUG){buildDbg();dbgHash();}
   return true;
  }catch(e){console.error(e);$('#progTxt').style.display='block';$('#progTxt').textContent=T('Не удалось загрузить: ','Failed to load: ')+e.message;loading=null;$('#go').disabled=false;return false;}})();return loading;}
 $('#go').onclick=async()=>{audioInit();if(SND.ctx&&SND.ctx.state!=='running')SND.ctx.resume();$('#go').disabled=true;
  // «Смотреть» работает сразу: если модели ещё догружаются, пролог начинается с темноты и тиканья часов
- if(!loadedOK){$('#start').hidden=true;fade('#000',1);level('tick',.6);level('sand',.12);}
- const ok=await loadAll();$('#go').disabled=false;if(!ok){$('#start').hidden=false;return;}$('#start').hidden=true;started=true;go(1);};
+ if(!loadedOK){$('#start').hidden=true;fade('#000',1);level('tick',.6);level('sand',.12);$('#wait').hidden=false;prog();}
+ const ok=await loadAll();$('#go').disabled=false;$('#wait').hidden=true;if(!ok){$('#start').hidden=false;return;}$('#start').hidden=true;started=true;go(1);};
 $('#play').onclick=()=>{if(EMBED&&parent!==window){parent.postMessage({cutscene:'done',hero:S.hero},'*');return;}window.open('https://claude.ai/artifact/GHanCzXV5hD9EDjAWH4Mc1','_blank','noopener');};
 boot();
 </script>

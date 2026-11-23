@@ -5,13 +5,16 @@
   const CDN = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/';
   const FILES = {
     knight: ['knight_v3_0.txt'], gravedigger: ['gravedigger_v3_0.txt'],
-    nun: ['nun_v4_0.txt'], forger: ['forger_v3_0.txt'], warden: ['warden_v2_0.txt']
+    nun: ['nun_v4_0.txt'], forger: ['forger_v3_0.txt'], warden: ['warden_v2_0.txt'],
+    executioner: ['executioner_v3_0.txt'], chronicler: ['chronicler_v2_0.txt'], vampire: ['vampire_v3_0.txt']
   };
-  const HEIGHT = { knight: 1.85, gravedigger: 1.8, nun: 1.74, forger: 1.85, warden: 1.74 };
+  const HEIGHT = { knight: 1.85, gravedigger: 1.8, nun: 1.74, forger: 1.85, warden: 1.74, executioner: 2.0, chronicler: 1.86, vampire: 1.7 };
   // оружие на вокзале не носят (как и в Палате)
   // у рыцаря в файле части подписаны со сдвигом: «Helmet» — это щит
-  const HIDE = { knight: ['Greatsword', 'Paladin_J_Nordstrom_Helmet'], gravedigger: ['X_Shovel'], nun: ['X_Cross'], forger: ['X_Cane'], warden: [] };
-  const MODEL = { rowen: 'knight', miron: 'gravedigger', agata: 'nun', tibo: 'forger', smotritel: 'warden' };
+  const HIDE = { knight: ['Greatsword', 'Paladin_J_Nordstrom_Helmet'], gravedigger: ['X_Shovel'], nun: ['X_Cross'], forger: ['X_Cane'], warden: [], executioner: ['BattleAxe_GEO'], chronicler: [], vampire: ['X_Scythe'] };
+  const MODEL = { rowen: 'knight', miron: 'gravedigger', agata: 'nun', tibo: 'forger', smotritel: 'warden',
+    // секретные герои: палач Гордей, летописец Евсей, графиня Маргарет (и их фигуры-NPC на вокзале и в делах)
+    gordey: 'executioner', evsey: 'chronicler', margaret: 'vampire', margaretP: 'vampire', margaretN: 'vampire' };
   const LEGS = /(UpLeg|Leg|Foot|ToeBase|Toe_End)$/;
   const MIXERS = [];
   let libs = null;
@@ -55,7 +58,7 @@
     if (location.protocol === 'file:') { const s = atob(await txtScript(f)); u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); }
     else {
       let c = null, r = null;
-      try { c = window.caches ? await caches.open('prigovor-models-v2') : null; r = c ? await c.match('glb/' + f) : null; } catch (e) { c = null; }
+      try { c = window.caches ? await caches.open('prigovor-models-v3') : null; r = c ? await c.match('glb/' + f) : null; } catch (e) { c = null; }
       if (!r) {
         r = glbTxt ? null : await fetch('cs/glb/' + f).catch(() => null);
         if (!r || !r.ok) { r = await fetch('cs/glb/' + f + '.txt'); if (!r.ok) throw new Error(f + ' ' + r.status); glbTxt = true; } // base64-копия для хостинга без .gz
@@ -81,12 +84,35 @@
     }
     root.traverse(o => { if (o.userData.oname !== undefined) o.name = o.userData.oname; });
     root.traverse(o => { if (o.isSkinnedMesh) { o.position.set(0, 0, 0); o.quaternion.identity(); o.scale.set(1, 1, 1); o.bind(o.skeleton, new THREE.Matrix4()); } });
+    // один общий скелет на модель вместо копии у каждой части
+    { const sk = []; const same = (a, b) => { if (a.bones.length !== b.bones.length) return false; for (let i = 0; i < a.bones.length; i++) { if (a.bones[i] !== b.bones[i]) return false; const x = a.boneInverses[i].elements, y = b.boneInverses[i].elements; for (let k = 0; k < 16; k++) if (Math.abs(x[k] - y[k]) > 1e-5) return false; } return true; };
+      root.traverse(o => { if (!o.isSkinnedMesh) return; const s = sk.find(q => same(q, o.skeleton)); if (s) o.skeleton = s; else sk.push(o.skeleton); }); }
   }
   async function model(n) {
     const buf = await bin(n);
     const r = await new Promise((res, rej) => new THREE.GLTFLoader().parse(buf, '', res, rej));
     const g = r.scene.children.length === 1 ? r.scene.children[0] : r.scene; if (g.parent) g.parent.remove(g);
-    fixGlb(g, r.animations); g.animations = r.animations; return g;
+    fixGlb(g, r.animations); g.animations = r.animations;
+    if (LITE && /_v\d+_\d+$/.test(n)) { const S = await simplifier(); if (S) liteMesh(g, S); }
+    return g;
+  }
+  // телефон: облегчаем сетку героев (meshoptimizer убирает треугольники, вершины с весами костей те же) — как в катсцене. ?lite=0 / ?lite=1
+  const LITE = /[?&]lite=1/.test(location.search) || (!/[?&]lite=0/.test(location.search) && (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform))));
+  let _ms = null;
+  function simplifier() { return _ms || (_ms = import('https://cdn.jsdelivr.net/npm/meshoptimizer@0.21.0/meshopt_simplifier.module.js').then(async m => { await m.MeshoptSimplifier.ready; return m.MeshoptSimplifier; }).catch(() => null)); }
+  function liteMesh(root, S) {
+    root.traverse(o => {
+      if (!o.isMesh) return; const geo = o.geometry, pa = geo.attributes.position;
+      if (!geo.index || pa.isInterleavedBufferAttribute || pa.itemSize !== 3 || !(pa.array instanceof Float32Array)) return;
+      const src = geo.index.array, hadG = geo.groups.length > 0, grs = hadG ? geo.groups.slice() : [{ start: 0, count: src.length, materialIndex: 0 }];
+      const out = new Uint32Array(src.length); let k = 0; const ng = [];
+      for (const gr of grs) {
+        const sub = new Uint32Array(src.subarray(gr.start, gr.start + gr.count)); let res = sub;
+        if (sub.length >= 1500) { const r2 = S.simplify(sub, pa.array, 3, Math.floor(sub.length * .3 / 3) * 3, .004, ['Sparse'])[0]; if (r2.length >= 3) res = r2; }
+        out.set(res, k); ng.push([k, res.length, gr.materialIndex]); k += res.length;
+      }
+      geo.setIndex(new THREE.BufferAttribute(out.slice(0, k), 1)); geo.clearGroups(); if (hadG) ng.forEach(x => geo.addGroup(x[0], x[1], x[2]));
+    });
   }
   const cache = {};
   function load(id, fresh) {
@@ -100,7 +126,8 @@
       let idle = ig ? ig.animations[0] || null : null;
       let walk = wg ? wg.animations[0] || null : null;
       // Смотритель (MPFB) со своими длинами костей: из старого клипа берём только повороты
-      if (id === 'warden' && idle) { idle = idle.clone(); idle.tracks = idle.tracks.filter(tr => !/\.(position|scale)$/.test(tr.name)); }
+      // и без ног/таза: чужой клип сгибает ему колени и валит корпус вперёд — стоит прямо, живут руки, голова и плечи
+      if (id === 'warden' && idle) { idle = idle.clone(); idle.tracks = idle.tracks.filter(tr => !/\.(position|scale)$/.test(tr.name) && !/(Hips|UpLeg|Leg|Foot|ToeBase|Toe_End|Spine\d?|Shoulder|Arm|ForeArm|Hand)\.quaternion$/.test(tr.name)); }
       return { g, idle: idle || g.animations[0] || null, walk };
     })();
     if (!fresh) cache[id] = p;
@@ -160,6 +187,18 @@
     }
   }
 
+  // Смотритель держит руки за спиной (как его простая фигура): плечо вниз и чуть назад, предплечье — за поясницу
+  function handsBehind(B, root) {
+    root.updateMatrixWorld(true);
+    const q = root.getWorldQuaternion(new THREE.Quaternion());
+    const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(q), left = new THREE.Vector3(1, 0, 0).applyQuaternion(q), up = new THREE.Vector3(0, 1, 0);
+    for (const [s, k] of [['Left', 1], ['Right', -1]]) {
+      const ua = B[s + 'Arm'], fa = B[s + 'ForeArm'], hd = B[s + 'Hand'];
+      if (!ua || !fa || !hd) continue;
+      aim(ua, fa, up.clone().multiplyScalar(-1).addScaledVector(fwd, -.32).addScaledVector(left, k * .12));
+      aim(fa, hd, left.clone().multiplyScalar(-k * .95).addScaledVector(fwd, -.38).addScaledVector(up, .28));
+    }
+  }
   async function attach(n, seated) {
     const id = MODEL[n.id.replace(/^b_/, '')];
     if (!id) return;
@@ -198,6 +237,7 @@
       sit(B, holder);
     } else {
       g.position.y = -b2.min.y;
+      if (id === 'warden') handsBehind(B, holder);
     }
     n.model3d = holder;
     if (window.Passengers3D && Passengers3D.blob) Passengers3D.blob(n.st.root, seated);
@@ -258,6 +298,7 @@
     setTP(!TP.on);
   });
   const _c = new THREE.Vector3(), _h = new THREE.Vector3();
+  const TPK = { executioner: 1.25, chronicler: 1.35 };
   // вызывается из tick() игры после установки камеры от первого лица
   function thirdPerson(dt, moving, run, eye) {
     const show = TP.on && !(typeof D !== 'undefined' && D.on);
@@ -278,11 +319,13 @@
     if (TP.aWalk) TP.aWalk.timeScale = run ? 1.7 : 1;
     // камера за спиной: отодвигаемся, пока не упрёмся в стену
     const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw);
-    let d = .3; const want = TP.dist;
+    // крупные модели (палач, летописец с кольцом за спиной) — камера дальше и выше
+    const k = TPK[TP.id] || 1;
+    let d = .3; const want = TP.dist * k;
     while (d < want && window.inside(P.x - fx * (d + .25), P.z - fz * (d + .25))) d += .1;
     const ch = Math.cos(P.pitch), cy = Math.sin(P.pitch);
     _h.set(P.x, fy + eye * .95, P.z);
-    _c.set(P.x - fx * d * ch, fy + eye * .95 + .35 - cy * d, P.z - fz * d * ch);
+    _c.set(P.x - fx * d * ch, fy + eye * .95 + .35 + (k - 1) * .5 - cy * d, P.z - fz * d * ch);
     camera.position.copy(_c);
     camera.lookAt(_h.x + fx * .6, _h.y + cy * .6, _h.z + fz * .6);
   }

@@ -14,7 +14,9 @@
     pauseLock(); opt = opt || {};
     $('fight').querySelector('.foe').firstChild.textContent = (opt.foe || 'Нападавший') + ' ';
     $('fight').classList.toggle('lit', !!opt.lit);
-    F = { hp: tough ? 3 : 2, maxHp: tough ? 3 : 2, foe: 4, step: 0, done, tough, win: 0, cur: null, t: 0, timer: 0 };
+    const weak = !tough && typeof S !== 'undefined' && S.hero === 'evsey'; // летописец в драке слабее всех
+    F = { hp: tough ? 3 : weak ? 1 : 2, maxHp: tough ? 3 : weak ? 1 : 2, foe: 4, step: 0, done, tough, weak, win: 0, cur: null, t: 0, timer: 0 };
+    if (weak && window.showBuff) setTimeout(() => showBuff('Евсей: в драке слабее всех', true), 300);
     $('fight').classList.add('on'); $('fmsg').textContent = 'Уворачивайся и бей! Жми стрелку (или A / D / S), как только она загорится.';
     drawFight();
     setTimeout(nextBlow, 1400);
@@ -27,7 +29,7 @@
     if (!F) return;
     if (F.foe <= 0 || F.hp <= 0) return endFight();
     const d = DIRS[Math.floor(Math.random() * DIRS.length)];
-    F.cur = d; F.win = (F.tough ? 1.35 : 1.1) - F.step * .04; F.t0 = performance.now(); F.step++;
+    F.cur = d; F.win = (F.tough ? 1.35 : F.weak ? .95 : 1.1) - F.step * .04; F.t0 = performance.now(); F.step++;
     $('farrow').textContent = d.s; $('farrow').className = 'on'; $('fring').style.animation = 'none'; void $('fring').offsetWidth;
     $('fring').style.animation = 'shrink ' + F.win + 's linear forwards';
     $('fmsg').textContent = d.t + '!';

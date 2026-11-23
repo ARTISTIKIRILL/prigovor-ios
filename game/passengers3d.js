@@ -79,6 +79,32 @@
     root.add(m); root.userData.blob = m;
   }
 
+  // Загрузчик FBX (r128) даёт каждой части одежды свою копию скелета: копии висят дочерними костями с нулевым сдвигом,
+  // и у человека выходит ~830 костей вместо ~50. Каждый кадр движок пересчитывает их все (у 27 человек — 22 тыс. объектов).
+  // Перепривязываем меши к основным костям (мировые матрицы те же — картинка не меняется), лишние кости и ненужные
+  // варианты одежды убираем, а одинаковые скелеты частей одного человека объединяем в один.
+  function slim(g) {
+    const rm = []; g.traverse(m => { if (m.isMesh && !m.visible) rm.push(m); }); rm.forEach(m => m.parent.remove(m));
+    const ident = b => b.position.lengthSq() < 1e-8 && Math.abs(Math.abs(b.quaternion.w) - 1) < 1e-6 &&
+      Math.abs(b.scale.x - 1) < 1e-5 && Math.abs(b.scale.y - 1) < 1e-5 && Math.abs(b.scale.z - 1) < 1e-5;
+    const canon = b => { let c = b; while (c.parent && c.parent.isBone && c.parent.name === c.name && ident(c)) c = c.parent; return c; };
+    const sameInv = (a, b) => { for (let i = 0; i < a.length; i++) { const x = a[i].elements, y = b[i].elements; for (let k = 0; k < 16; k++) if (Math.abs(x[k] - y[k]) > 1e-5) return false; } return true; };
+    const skels = [];
+    g.traverse(m => {
+      if (!m.isSkinnedMesh) return;
+      const sk = m.skeleton, bones = sk.bones.map(canon);
+      let s = skels.find(q => q.bones.length === bones.length && q.bones.every((b, i) => b === bones[i]) && sameInv(q.boneInverses, sk.boneInverses));
+      if (!s) { s = new THREE.Skeleton(bones, sk.boneInverses.map(x => x.clone())); skels.push(s); }
+      m.skeleton = s;
+    });
+    const used = new Set(); skels.forEach(s => s.bones.forEach(b => used.add(b)));
+    for (let pass = 0; pass < 64; pass++) {   // цепочки копий бывают по 15 штук
+      const dead = []; g.traverse(b => { if (b.isBone && !used.has(b) && b.parent && b.parent.isBone && b.parent.name === b.name && ident(b) && !b.children.length) dead.push(b); });
+      if (!dead.length) break;
+      dead.forEach(b => b.parent.remove(b));
+    }
+  }
+
   function bonesOf(g) { const B = {}; g.traverse(o => { if (o.isBone) { const n = o.name.replace(/^mixamorig:?/, ''); if (!B[n]) B[n] = o; } }); return B; }
 
   // ---------- привязка к NPC ----------
@@ -118,6 +144,7 @@
       if (nm === 'body') { m.material.color.copy(skinTint); m.material.roughness = .6; }
       if (nm === 'eyes') m.material.roughness = .2;
     });
+    slim(g);
     const B = bonesOf(g);
     if (!B.Hips || !B.LeftArm) { console.warn('пассажиры 3D: нет костей'); return; }
     const holder = new THREE.Group(); holder.add(g);
@@ -171,6 +198,21 @@
     st.root.traverse(m => { if (m.userData && m.userData.acc && m !== holder) acc.push(m); });
     // прячем процедурное тело (кроме аксессуаров)
     st.root.traverse(m => { if (m.isMesh && !m.userData.acc && !isIn(m, holder)) m.visible = false; });
+    // отсечение по кадру: сфера вокруг всего человека (а не по позе привязки скелета) — кого нет в кадре, не рисуем;
+    // считается для каждой камеры отдельно, поэтому в зеркалах люди за спиной остаются
+    st.root.updateMatrixWorld(true);
+    const cW = st.root.localToWorld(new THREE.Vector3(0, .9, 0));
+    g.traverse(m => {
+      if (!m.isMesh) return;
+      const geo = m.geometry;
+      if (!geo.userData.bsFix) {
+        const s = m.matrixWorld.getMaxScaleOnAxis() || 1;
+        geo.boundingSphere = new THREE.Sphere(cW.clone().applyMatrix4(m.matrixWorld.clone().invert()), 1.6 / s);
+        geo.userData.bsFix = true;
+      }
+      m.frustumCulled = true;
+    });
+    needCompile = true;
     st.m3 = { holder, g, map, B, hq, acc, accDone: false };
     if (!(st.root.rotation.x || st.root.rotation.z)) blob(st.root, !st.stand);
     ALL.push(st);
@@ -219,6 +261,13 @@
       e.b.quaternion.copy(_q3.multiply(want));
     }
   }
+  // невидимого человека вынимаем из сцены целиком: скрытые объекты движок всё равно обходит каждый кадр
+  function showHolder(st, vis) {
+    const h = st.m3.holder;
+    h.visible = vis;
+    if (vis && !h.parent) { st.root.add(h); drive(st); }
+    else if (!vis && h.parent) h.parent.remove(h);
+  }
   const orig = window.animHuman;
   window.animHuman = function (st, dt, px, pz, talking, speed) {
     orig.apply(this, arguments);
@@ -228,18 +277,34 @@
       // в поезде рисуем свой вагон и тех, кто совсем рядом (через стенки остальных всё равно не видно)
       let vis = d < 17;
       if (vis && d > 7 && typeof zoneName === 'function' && typeof curLoc === 'function' && curLoc() === 'train') vis = zoneName(st.root.position.x) === zoneName(px);
-      st.m3.holder.visible = vis;
+      showHolder(st, vis);
       if (vis && (d < 7 || ((st.m3.k = (st.m3.k || 0) + 1) % 3 === 0))) drive(st);   // дальних — раз в 3 кадра
     }
   };
 
   // все NPC: и уже созданные, и будущие (вокзал, пароход, бегущие)
   function scan() {
-    if (typeof NPCS !== 'undefined') for (const n of NPCS) if (n.st && !n.st.m3 && !n.st.m3loading && !/^(b_|smotritel)/.test(n.id) && !n.model3d) attach(n.st);
+    // модели грузим только людям текущей локации: остальные локации подгрузятся, когда в них войдёшь (меньше памяти на телефоне)
+    const here = window.WORLD ? WORLD.cur : 'train';
+    if (typeof NPCS !== 'undefined') for (const n of NPCS) if (n.st && !n.st.m3 && !n.st.m3loading && (n.loc || 'train') === here && !/^(b_|smotritel|gordey$|evsey$|margaret)/.test(n.id) && !n.model3d) attach(n.st);
     if (typeof CHASE !== 'undefined' && CHASE.st && !CHASE.st.m3) attach(CHASE.st);
     if (typeof PATROL !== 'undefined' && PATROL.st && !PATROL.st.m3) attach(PATROL.st);
     if (typeof PROPS !== 'undefined' && PROPS.body && PROPS.body.root && !PROPS.body.m3) attach(PROPS.body); // тело в тамбуре
   }
-  setInterval(() => { try { scan(); } catch (e) { console.warn(e); } }, 1500);
+  // шейдеры новых людей собираем заранее, пока их не видно: иначе при входе в вагон кадр замирает на 0.1–0.3 с
+  // (заодно и всё скрытое в поезде: вещи, двери, лампы появляются позже — их шейдеры тоже собираем сразу)
+  let needCompile = true;
+  function precompile() {
+    if (!needCompile || typeof renderer === 'undefined' || typeof camera === 'undefined' || typeof trainReady === 'undefined' || !trainReady) return;
+    if (typeof NPCS !== 'undefined' && NPCS.some(n => n.st && n.st.m3loading && !n.st.m3)) return;   // ждём, пока догрузятся все
+    needCompile = false;
+    const hidden = [], flip = [];
+    for (const st of ALL) if (st.m3 && !st.m3.holder.parent) { showHolder(st, true); hidden.push(st); }
+    scene.traverse(o => { if (!o.visible) { o.visible = true; flip.push(o); } });
+    try { renderer.compile(scene, camera); } catch (e) { console.warn(e); }
+    flip.forEach(o => { o.visible = false; });
+    hidden.forEach(st => showHolder(st, false));
+  }
+  setInterval(() => { try { scan(); precompile(); } catch (e) { console.warn(e); } }, 1500);
   window.Passengers3D = { attach, scan, outfit, ALL, blob };
 })();
