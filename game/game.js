@@ -305,6 +305,32 @@ const D = { on: false, npc: null, dlg: null, node: null, q: [], i: 0, shown: 0, 
 const dlgEl = document.getElementById('dlg'), whoEl = document.getElementById('who'), txtEl = document.getElementById('txt'), porEl = document.getElementById('portrait'), porR = document.getElementById('portraitR'),
   chEl = document.getElementById('choices'), nextEl = document.getElementById('next'), bgEl = document.getElementById('bg');
 let porId = '', porExpr = '', porRId = '';
+// --- диалог v3: медальон говорящего, журнал, «уже спрашивал», автолистание ---
+const boxEl = document.getElementById('box'), logEl = document.getElementById('dlglog'), logList = document.getElementById('dlglist'), autoBtn = document.getElementById('dlgauto');
+const SEEN = new WeakMap(); // узел → тексты уже выбранных ответов
+const LOG = []; let logSep = false;
+let AUTO = false; try { AUTO = localStorage.getItem('prig_auto') === '1'; } catch (e) { }
+autoBtn.classList.toggle('on', AUTO);
+function setAuto(v) { AUTO = v; autoBtn.classList.toggle('on', v); D.autoT = 0; try { localStorage.setItem('prig_auto', v ? '1' : '0'); } catch (e) { } }
+function frame(act, color) { // act: porEl / porR / null
+  porEl.classList.toggle('act', act === porEl); porR.classList.toggle('act', act === porR);
+  boxEl.classList.toggle('nop', !act);
+  if (color) boxEl.style.setProperty('--pc', color); else boxEl.style.removeProperty('--pc');
+}
+function heroColor() { return S.hero && HERO_UI[S.hero] ? HERO_UI[S.hero].c : null; }
+function logAdd(cls, name, text, color) {
+  if (logSep && LOG.length) LOG.push({ cls: 'sep', text: '· · ·' }); logSep = false;
+  LOG.push({ cls, name, text, color }); if (LOG.length > 160) LOG.splice(0, LOG.length - 160);
+}
+function openLog() {
+  logList.innerHTML = '';
+  LOG.forEach(l => { const d = document.createElement('div'); d.className = 'ln ' + (l.cls || ''); if (l.color) d.style.setProperty('--pc', l.color);
+    if (l.name) { const b = document.createElement('b'); b.textContent = l.name; d.appendChild(b); } d.appendChild(document.createTextNode(l.text)); logList.appendChild(d); });
+  if (!LOG.length) logList.innerHTML = '<div class="ln narr">Пока пусто.</div>';
+  logEl.classList.add('on'); logList.scrollTop = logList.scrollHeight;
+}
+function closeLog() { logEl.classList.remove('on'); }
+const plain = h => { const t = document.createElement('div'); t.innerHTML = h; return t.textContent; };
 function openDlg() {
   D.on = true; D.choosing = false;
   document.body.classList.add('talking'); dlgEl.classList.add('on');
@@ -320,7 +346,7 @@ function startDialog(npc) {
     st = 'menu';
     const c = STORY.cast[npc.id]; whoEl.style.display = 'block'; whoEl.innerHTML = (c ? c.name + '<small>' + c.role + '</small>' : npc.name);
     txtEl.classList.add('narr'); txtEl.textContent = (c ? c.name : npc.name) + ' ждёт, что ты скажешь.'; D.full = txtEl.textContent; D.shown = D.full.length;
-    if (c && STORY.cast[npc.id]) { porEl.innerHTML = portraitSVG(npc.id, 'neutral'); porId = npc.id; porExpr = 'neutral'; porEl.classList.add('show'); porEl.classList.remove('dim'); }
+    if (c && STORY.cast[npc.id]) { porEl.innerHTML = portraitSVG(npc.id, 'neutral'); porId = npc.id; porExpr = 'neutral'; porEl.classList.add('show'); porEl.classList.remove('dim'); frame(porEl); } else frame(null);
   }
   S.f['met_' + npc.id] = true;
   runNode(st);
@@ -364,13 +390,16 @@ function nextLine() {
     const h = S.hero ? STORY.heroes[S.hero] : null;
     whoEl.innerHTML = h ? h.name + '<small>' + h.role + '</small>' : 'Детектив';
     porEl.classList.add('dim'); heroPortrait(); porR.classList.remove('dim');
-  } else if (!who) { whoEl.innerHTML = ''; porEl.classList.add('dim'); porR.classList.add('dim'); }
+    frame(S.hero ? porR : null, heroColor()); logAdd('', h ? h.name : 'Детектив', text, heroColor());
+  } else if (!who) { whoEl.innerHTML = ''; porEl.classList.add('dim'); porR.classList.add('dim'); frame(null); logAdd('narr', '', text); }
   else {
     const c = STORY.cast[who];
     whoEl.innerHTML = c.name + '<small>' + c.role + '</small>';
     if (porId !== who || porExpr !== ex) { porEl.innerHTML = portraitSVG(who, ex); porId = who; porExpr = ex; }
     porEl.classList.add('show'); porEl.classList.remove('dim'); porR.classList.add('dim');
+    frame(porEl); logAdd('', c.name, text);
   }
+  D.autoT = 0;
   whoEl.style.display = who === null ? 'none' : 'block';
   txtEl.classList.toggle('narr', !who);
   txtEl.textContent = '';
@@ -393,6 +422,8 @@ function finishNode() {
 function showChoices(opts, question) {
   D.choosing = true; D.chAt = performance.now(); D.opts = opts; D.sel = 0; nextEl.style.display = 'none'; D.speaking = false;
   chEl.innerHTML = '';
+  if (!question && porEl.classList.contains('show')) { porEl.classList.remove('dim'); frame(porEl); } // во время выбора — лицо собеседника
+  const seen = !question && D.node && SEEN.get(D.node);
   chEl.classList.toggle('ev', !!question);
   if (question) { const q = document.createElement('div'); q.className = 'evq'; q.textContent = 'Предъяви улику: ' + question; chEl.appendChild(q); }
   opts.forEach((c, k) => {
@@ -400,6 +431,7 @@ function showChoices(opts, question) {
     let txt = c.t;
     if (hh && HERO_UI[hh]) { txt = txt.replace(/^\((Тибо|Агата|Ровен|Мирон)\)\s*/, ''); b.className = 'hero'; b.style.setProperty('--hc', HERO_UI[hh].c); b.dataset.ic = HERO_UI[hh].ic; txt += '<em class="htag">' + HERO_UI[hh].tag + '</em>'; }
     b.innerHTML = '<i>' + (k + 1) + '</i>' + txt; if (c.exit) b.className = 'exit';
+    if (seen && !c.exit && seen.has(c.t)) { b.classList.add('seen'); b.title = 'Уже спрашивал'; }
     b.addEventListener('click', e => { e.stopPropagation(); choose(k); });
     b.addEventListener('mouseenter', () => { D.sel = k; markSel(); });
     chEl.appendChild(b);
@@ -409,6 +441,8 @@ function showChoices(opts, question) {
 function markSel() { [...chEl.querySelectorAll('button')].forEach((b, k) => b.classList.toggle('sel', k === D.sel)); }
 function choose(k) {
   const c = D.opts[k]; if (!c) return;
+  if (D.node && c.evid === undefined && !c.exit) { let st = SEEN.get(D.node); if (!st) SEEN.set(D.node, st = new Set()); st.add(c.t); }
+  if (!c.exit) logAdd('me', '', plain(c.t).replace(/^\((Тибо|Агата|Ровен|Мирон)\)\s*/, ''));
   chEl.innerHTML = ''; chEl.classList.remove('ev'); D.choosing = false;
   if (c.evid !== undefined) { if (c.evid) D.evUsed.push(c.evid); runNode(c.ok ? c.next : c.fail); return; }
   if (c.exit) { closeDialog(); return; }
@@ -418,7 +452,7 @@ function choose(k) {
 }
 function showEvidence(ev) {
   whoEl.style.display = 'none'; txtEl.classList.add('narr'); txtEl.textContent = ev.q; D.full = ev.q; D.shown = ev.q.length;
-  porR.classList.add('dim');
+  porR.classList.add('dim'); frame(porEl.classList.contains('show') ? porEl : null);
   if (!D.evUsed || D.node === STORY.dialogs.remez.nodes.ev1 || D.node.evReset) D.evUsed = [];
   const cc = curCase();
   const free = S.clues.filter(id => caseOf(id) === cc && (!D.evUsed.includes(id) && !STORY.clues[id].lily || ev.ok.includes(id) && !D.evUsed.includes(id)));
@@ -436,6 +470,9 @@ function dlgAdvance(byMouse) {
   nextLine();
 }
 function dlgKey(e) {
+  if (logEl.classList.contains('on')) { if (['Escape', 'KeyJ', 'KeyL', 'Space', 'Enter', 'KeyE'].includes(e.code)) { e.preventDefault(); closeLog(); } return; }
+  if (e.code === 'KeyJ' || e.code === 'KeyL') { e.preventDefault(); openLog(); return; }
+  if (e.code === 'KeyA' && !e.repeat) { setAuto(!AUTO); return; }
   if (D.choosing) {
     const k = parseInt(e.key, 10);
     if (k >= 1 && k <= Math.min(9, D.opts.length) && performance.now() - D.chAt > 250) { choose(k - 1); return; }
@@ -454,11 +491,18 @@ document.getElementById('dlgskip').addEventListener('pointerdown', e => e.stopPr
 document.getElementById('dlgskip').addEventListener('click', e => { e.stopPropagation(); dlgSkip(); });
 document.getElementById('dlgx').addEventListener('click', e => { e.stopPropagation(); if (canExit()) closeDialog(); });
 document.getElementById('box').addEventListener('click', e => { e.stopPropagation(); dlgAdvance(true); });
-dlgEl.addEventListener('click', () => { if (!D.choosing) dlgAdvance(true); });
+['dlglogb', 'dlgauto', 'dlglogx'].forEach(id => document.getElementById(id).addEventListener('pointerdown', e => e.stopPropagation()));
+document.getElementById('dlglogb').addEventListener('click', e => { e.stopPropagation(); openLog(); });
+document.getElementById('dlglogx').addEventListener('click', e => { e.stopPropagation(); closeLog(); });
+logEl.addEventListener('click', e => { e.stopPropagation(); if (e.target === logEl) closeLog(); });
+autoBtn.addEventListener('click', e => { e.stopPropagation(); setAuto(!AUTO); });
+// колесо вверх — открыть журнал (если не прокручивается список ответов или сам журнал)
+dlgEl.addEventListener('wheel', e => { if (e.deltaY < -20 && !logEl.classList.contains('on') && !chEl.contains(e.target)) openLog(); }, { passive: true });
+dlgEl.addEventListener('click', () => { if (!D.choosing && !logEl.classList.contains('on')) dlgAdvance(true); });
 function closeDialog() {
   D.on = false; D.speaking = false; D.choosing = false;
   dlgEl.classList.remove('on'); document.body.classList.remove('talking'); porEl.classList.remove('show'); porR.classList.remove('show');
-  chEl.innerHTML = ''; setBg('none'); updateQuest();
+  chEl.innerHTML = ''; setBg('none'); updateQuest(); closeLog(); logSep = true; porEl.classList.remove('act'); porR.classList.remove('act');
   setTimeout(() => { if (gameOn && !D.on && !locked && !endEl.classList.contains('on') && !noteEl.classList.contains('on') && !keypadEl.classList.contains('on') && !matchMedia('(pointer: coarse)').matches) toggleLock(); }, 30);
 }
 const headW = new THREE.Vector3();
@@ -473,6 +517,9 @@ function dlgCamera(dt) {
     txtEl.textContent = D.full.slice(0, Math.floor(D.shown));
   }
   { const talking = D.on && !D.choosing && D.shown < D.full.length && D.hold <= 0; porEl.classList.toggle('talk', talking && !porEl.classList.contains('dim')); porR.classList.toggle('talk', talking && !porR.classList.contains('dim')); }
+  { const rdy = D.on && !D.choosing && D.shown >= D.full.length; nextEl.classList.toggle('rdy', rdy);
+    // автолистание: после полной реплики — пауза по длине текста
+    if (rdy && AUTO && !logEl.classList.contains('on') && !(D.node && D.node.evidence)) { D.autoT = (D.autoT || 0) + dt; if (D.autoT > 1.1 + D.full.length * 0.028) { D.autoT = 0; nextLine(); } } }
   document.getElementById('dlgx').style.display = canExit() ? 'block' : 'none';
   document.getElementById('dlgskip').style.display = D.on && !D.choosing && D.q && D.i < D.q.length - 1 ? 'block' : 'none';
   if (!D.npc) return;

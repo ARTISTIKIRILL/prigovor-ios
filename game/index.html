@@ -254,6 +254,112 @@
     #dlgskip { top: 8px; right: 98px; padding: 7px 12px; font-size: 13px; }
   }
   @media (max-width: 520px) and (orientation: portrait) { #dock #choices { grid-template-columns: 1fr; } }
+  /* ===== диалог v3: одна карточка внизу — портрет-медальон слева, имя, реплика, под ней ответы.
+     Киношные полосы сверху/снизу, журнал реплик, отметка уже заданных вопросов, автолистание. ===== */
+  #dlg .lbox { position: absolute; left: 0; right: 0; height: 6.5vh; background: #000; transform: scaleY(0); transition: transform .35s ease; pointer-events: none; }
+  #dlg .lbox.t { top: 0; transform-origin: top; } #dlg .lbox.b { bottom: 0; transform-origin: bottom; }
+  #dlg.on .lbox { transform: none; }
+  #dlg .shade { height: 62%; background: linear-gradient(transparent, #00000070 35%, #000000d8 80%); }
+  #dlg #dock { bottom: 2.6vh; width: min(980px, 94%); gap: 0; }
+  #dlg #box { display: grid; grid-template-columns: auto 1fr; gap: 0 24px; align-items: start; padding: 20px 28px 18px 20px; border-radius: 16px; cursor: pointer;
+    background: linear-gradient(180deg, #1a1610f2, #0d0c0af6); border: 1px solid #d9b46a33; box-shadow: 0 22px 60px #000d, inset 0 1px 0 #ffe7b018; max-height: 72vh; }
+  #dlg #box:before { content: ''; position: absolute; left: 24px; right: 24px; top: -1px; height: 1px; background: linear-gradient(90deg, transparent, #f0d58ecc, transparent); }
+  #dlg #box.nop { grid-template-columns: 1fr; padding-left: 28px; }
+  /* медальон с портретом говорящего */
+  #dlg #pframe { position: relative; width: 132px; height: 160px; border-radius: 12px; overflow: hidden; border: 1px solid var(--pc, #d9b46a99); background: radial-gradient(ellipse at 50% 35%, #3a3024, #15110c 75%);
+    box-shadow: 0 8px 24px #000a, inset 0 0 0 3px #00000066, 0 0 18px color-mix(in srgb, var(--pc, #d9b46a) 25%, transparent); transition: border-color .25s, box-shadow .25s; }
+  #dlg #box.nop #pframe { display: none; }
+  #dlg #portrait, #dlg #portraitR { position: absolute; left: -12%; top: -2%; width: 124%; height: auto; aspect-ratio: 500 / 640; bottom: auto; right: auto; filter: none; transform: translateY(6px); opacity: 0; transition: opacity .22s, transform .22s; }
+  #dlg #portrait.act, #dlg #portraitR.act { opacity: 1; transform: none; }
+  #dlg #portrait { left: -27%; top: -5%; width: 154%; } /* у портретов собеседников голова мельче — ближе */
+  #dlg #portrait.talk svg, #dlg #portraitR.talk svg { animation: talk .34s ease-in-out infinite alternate; }
+  #dlg #dbody { min-width: 0; display: flex; flex-direction: column; max-height: calc(72vh - 40px); }
+  #dlg #who { position: static; display: block; padding: 0; margin: 0 0 6px; border: 0; background: none; box-shadow: none; font-size: 15px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--pc, #f0d58e); white-space: normal; max-width: none; }
+  #dlg #who small { text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 500; color: #a9a294; margin-left: 10px; }
+  #dlg #who:after { display: none; }
+  #dlg #txt { font-size: 19px; line-height: 1.55; min-height: 58px; margin: 0; max-width: 68ch; color: #f5f0e6; }
+  #dlg #txt.narr { color: #d6cfbf; font-style: italic; }
+  #dlg #box.nop #txt.narr { text-align: center; max-width: none; margin: 0 auto; padding: 4px 30px; }
+  #dlg #next { position: static; align-self: flex-end; margin-top: 6px; font-size: 12px; color: #d9b46a; opacity: 0; transition: opacity .2s; animation: none; letter-spacing: .04em; }
+  #dlg #next.rdy { opacity: .9; animation: nxt 1.2s ease-in-out infinite; }
+  #dlg #next .k { display: inline-block; padding: 1px 6px; margin-right: 4px; border: 1px solid #d9b46a66; border-radius: 4px; font-size: 11px; color: #f0d58e; }
+  @keyframes nxt { 50% { opacity: .45; } }
+  /* ответы — под репликой, ровным списком */
+  #dlg #choices { position: static; display: flex; flex-direction: column; align-items: stretch; gap: 5px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #d9b46a22; max-height: none; overflow-y: auto; min-height: 0; }
+  #dlg #choices:empty { display: none; }
+  #dlg #choices button { min-width: 0; max-width: none; width: 100%; text-align: left; padding: 9px 14px 9px 46px; border-radius: 9px; border: 1px solid transparent; background: #ffffff07; box-shadow: none;
+    color: #f3ede2; font-size: 16.5px; line-height: 1.35; transform: none; transition: background .12s, border-color .12s, color .12s, padding .12s; animation: chin3 .2s backwards; }
+  @keyframes chin3 { from { opacity: 0; transform: translateY(5px); } }
+  #dlg #choices button:nth-child(2) { animation-delay: .03s; } #dlg #choices button:nth-child(3) { animation-delay: .06s; } #dlg #choices button:nth-child(4) { animation-delay: .09s; } #dlg #choices button:nth-child(5) { animation-delay: .12s; } #dlg #choices button:nth-child(6) { animation-delay: .15s; }
+  #dlg #choices button:before { display: none; }
+  #dlg #choices button i { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 6px; border: 1px solid #d9b46a55; background: #0006; color: #f0d58e; display: flex; align-items: center; justify-content: center; font-size: 12px; font-style: normal; margin: 0; }
+  #dlg #choices button:hover, #dlg #choices button.sel { background: linear-gradient(90deg, #d9b46a2a, #d9b46a08 70%); border-color: #d9b46a88; padding-left: 50px; transform: none; }
+  #dlg #choices button.sel i, #dlg #choices button:hover i { background: #d9b46a; color: #15110a; border-color: #d9b46a; }
+  /* уже спрашивал — приглушено, с галочкой */
+  #dlg #choices button.seen { color: #9a948a; }
+  #dlg #choices button.seen:after { content: '✓'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #7d776c; font-size: 13px; }
+  #dlg #choices button.seen.sel, #dlg #choices button.seen:hover { color: #d8d1c4; }
+  /* «Уйти» — отдельной строкой внизу */
+  #dlg #choices button.exit { opacity: 1; color: #b5ad9f; background: none; margin-top: 4px; font-size: 15px; }
+  #dlg #choices button.exit i { border-color: #ffffff30; color: #b5ad9f; }
+  #dlg #choices button.exit.sel, #dlg #choices button.exit:hover { color: #f3ede2; background: #ffffff0c; border-color: #ffffff40; }
+  #dlg #choices button.exit.sel i, #dlg #choices button.exit:hover i { background: #cfc8bb; color: #111; border-color: #cfc8bb; }
+  #dlg #choices button.hero { background: linear-gradient(90deg, color-mix(in srgb, var(--hc) 16%, transparent), #ffffff05 70%); border-color: color-mix(in srgb, var(--hc) 40%, transparent); }
+  #dlg #choices button.hero i { border-color: var(--hc); color: var(--hc); }
+  #dlg #choices button.hero.sel, #dlg #choices button.hero:hover { border-color: var(--hc); box-shadow: 0 0 14px color-mix(in srgb, var(--hc) 30%, transparent); }
+  #dlg #choices button.hero.sel i, #dlg #choices button.hero:hover i { background: var(--hc); color: #111; }
+  #dlg #choices .evq { text-align: left; color: #f0d58e; font-size: 14px; margin: 0 0 4px; text-shadow: none; letter-spacing: .03em; }
+  #dlg #choices.ev { top: auto; bottom: auto; }
+  #dlg #choices.ev button { font-size: 15px; padding-top: 8px; padding-bottom: 8px; }
+  /* панель кнопок сверху справа */
+  #dlgbar { position: absolute; top: calc(6.5vh + 10px); right: 62px; z-index: 3; display: flex; gap: 6px; }
+  #dlg #dlgbar button { position: static; display: block; padding: 7px 13px; border-radius: 9px; border: 1px solid #ffffff2a; background: #0d0c0ad8; color: #e9e3d6; font-size: 13px; cursor: pointer; touch-action: manipulation; transition: background .12s, border-color .12s; }
+  #dlg #dlgbar button:hover { border-color: #d9b46a; background: #2c2416ee; }
+  #dlg #dlgbar #dlgauto.on { border-color: #d9b46a; color: #f0d58e; background: #3a2e18ee; }
+  /* журнал */
+  #dlglog { position: absolute; inset: 0; z-index: 5; display: none; background: #000000b0; }
+  #dlglog.on { display: flex; align-items: center; justify-content: center; }
+  #dlglog .in { width: min(760px, 92%); max-height: 80vh; display: flex; flex-direction: column; background: #12100cf8; border: 1px solid #d9b46a44; border-radius: 14px; box-shadow: 0 20px 60px #000; }
+  #dlglog .hd { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; font-size: 14px; letter-spacing: .1em; text-transform: uppercase; color: #f0d58e; border-bottom: 1px solid #d9b46a22; }
+  #dlglog .hd button { background: none; border: 1px solid #ffffff30; color: #ddd; border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+  #dlglist { overflow-y: auto; padding: 10px 20px 18px; }
+  #dlglist .ln { padding: 7px 0; border-bottom: 1px solid #ffffff0a; font-size: 16px; line-height: 1.5; color: #e9e3d6; }
+  #dlglist .ln b { display: block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--pc, #d9b46a); }
+  #dlglist .ln.narr { color: #bdb6a8; font-style: italic; }
+  #dlglist .ln.me { color: #f0d58e; padding-left: 14px; border-left: 2px solid #d9b46a66; }
+  #dlglist .ln.me:before { content: '› '; }
+  #dlglist .ln.sep { text-align: center; color: #6f695f; font-size: 12px; letter-spacing: .12em; border: 0; }
+  @media (pointer: coarse), (max-width: 700px), (max-height: 500px) {
+    #dlg .lbox { height: 3.5vh; }
+    #dlg #dock { width: 96%; bottom: 1.5vh; }
+    #dlg #box { padding: 12px 14px 10px 12px; gap: 0 12px; border-radius: 12px; max-height: 80vh; }
+    #dlg #box.nop { padding-left: 14px; }
+    #dlg #pframe { width: 68px; height: 84px; border-radius: 9px; }
+    #dlg #dbody { max-height: calc(80vh - 24px); }
+    #dlg #who { font-size: 12px; margin-bottom: 3px; } #dlg #who small { font-size: 11px; margin-left: 6px; }
+    #dlg #txt { font-size: 15.5px; line-height: 1.45; min-height: 0; }
+    #dlg #next .k { display: none; }
+    #dlg #choices { display: flex; margin-top: 8px; padding-top: 8px; gap: 4px; }
+    #dlg #choices button { font-size: 14.5px; padding: 9px 12px 9px 40px; min-height: 40px; }
+    #dlg #choices button:hover, #dlg #choices button.sel { padding-left: 40px; }
+    #dlg #choices button i { width: 22px; height: 22px; left: 9px; font-size: 11px; }
+    #dlgbar { top: calc(3.5vh + 6px); right: 52px; gap: 4px; }
+    #dlg #dlgbar button { padding: 7px 10px; font-size: 12px; }
+    #dlg #dlgbar button span { display: none; }
+    #dlglist .ln { font-size: 14.5px; }
+  }
+  /* узкий вертикальный экран: ответы на всю ширину карточки, под портретом */
+  @media (max-width: 520px) and (orientation: portrait) {
+    #dlg #box { grid-template-columns: auto 1fr; overflow-y: auto; }
+    #dlg #dbody { display: contents; }
+    #dlg #pframe { grid-row: 1 / span 2; align-self: start; }
+    #dlg #who, #dlg #txt { grid-column: 2; } #dlg #who { align-self: end; }
+    #dlg #box.nop #who, #dlg #box.nop #txt { grid-column: 1 / -1; }
+    #dlg #choices, #dlg #next { grid-column: 1 / -1; }
+    #dlg #next { justify-self: end; }
+  }
+  /* телефон в альбомной: мало высоты — портрет меньше, полос нет */
+  @media (max-height: 440px) { #dlg .lbox { display: none; } #dlg #pframe { width: 54px; height: 66px; } #dlg #txt { font-size: 14.5px; } #dlg #choices button { font-size: 13.5px; min-height: 34px; padding-top: 6px; padding-bottom: 6px; } #dlgbar { top: 6px; } }
 </style>
 </head>
 <body>
@@ -276,8 +382,10 @@
 <div id="marks"></div><div id="eye"><i></i><b>👁</b></div>
 <div id="clue" class="panel"><b>Новая улика</b><span></span></div>
 <div id="stam"><i></i></div>
-<div id="dlg"><div id="bg"></div><div class="shade"></div><div id="portraitR"></div><button id="dlgx" title="Выйти из разговора (Esc)">✕ Выйти</button><button id="dlgskip" title="Пролистать реплики до выбора (Tab)">⏭ Пропустить</button><div id="portrait"></div>
-  <div id="dock"><div id="choices"></div><div id="box" class="panel"><div id="who"></div><div id="txt"></div><div id="next">▼</div></div></div></div>
+<div id="dlg"><div id="bg"></div><div class="shade"></div><div class="lbox t"></div><div class="lbox b"></div>
+  <div id="dlgbar"><button id="dlglogb" title="Журнал разговора (J или колесо вверх)">☰ <span>Журнал</span></button><button id="dlgauto" title="Реплики листаются сами (A)">▶ <span>Авто</span></button><button id="dlgskip" title="Пролистать реплики до выбора (Tab)">⏭ <span>Пропустить</span></button><button id="dlgx" title="Выйти из разговора (Esc)">✕ <span>Выйти</span></button></div>
+  <div id="dock"><div id="box" class="panel"><div id="pframe"><div id="portrait"></div><div id="portraitR"></div></div><div id="dbody"><div id="who"></div><div id="txt"></div><div id="choices"></div><div id="next"><span class="k">Пробел</span> дальше ▸</div></div></div></div>
+  <div id="dlglog"><div class="in"><div class="hd">Журнал разговора<button id="dlglogx">✕</button></div><div id="dlglist"></div></div></div></div>
 <div id="note"><div class="nbook"><h2>Блокнот детектива</h2><div class="sub" id="nsub"></div><ol id="nlist"></ol><button class="close">Закрыть (J)</button></div></div>
 <div id="end"><h1 id="etitle"></h1><p id="etext"></p><div class="row" id="erow"></div></div>
 <div id="sand"><div class="grain"></div><b>Песочные Часы переворачиваются</b></div>
@@ -303,7 +411,7 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <div id="errbox" style="position:absolute;left:8px;bottom:8px;max-width:70%;z-index:99;font:11px monospace;color:#ffb0a0;background:#200c0ccc;padding:4px 6px;border-radius:4px;display:none;white-space:pre-wrap"></div>
 <script>(function(){ const b = document.getElementById('errbox'); let n = 0; function show(m){ if (n++ > 6) return; b.style.display = 'block'; b.textContent += m + '\n'; } window.addEventListener('error', e => show((e.message || e) + ' @' + (e.filename || '').split('/').pop() + ':' + e.lineno)); window.addEventListener('unhandledrejection', e => show('promise: ' + (e.reason && e.reason.message || e.reason))); const ce = console.error; console.error = function(){ show([].join.call(arguments, ' ').slice(0, 300)); ce.apply(console, arguments); }; })();</script>
-<script src="portraits.js?v=64"></script><script src="heroportraits.js?v=60"></script><script src="npc.js?v=62"></script><script src="story.js?v=60"></script><script src="minigames.js?v=61"></script><script src="audio.js?v=60"></script><script src="game.js?v=74"></script><script src="story2.js?v=60"></script><script src="world2.js?v=68"></script><script src="story4.js?v=2"></script><script src="world3.js?v=4"></script><script src="story5.js?v=1"></script><script src="world4.js?v=8"></script><script src="story6.js?v=2"></script><script src="world5.js?v=6"></script><script src="story7.js?v=2"></script><script src="world6.js?v=7"></script><script src="story8.js?v=1"></script><script src="world7.js?v=7"></script><script src="decor.js?v=4"></script><script src="story9.js?v=3"></script><script src="story3.js?v=60"></script><script src="villain.js?v=60"></script><script src="secret.js?v=8"></script><script src="kingllm.js?v=1"></script><script src="heroes3d.js?v=73"></script><script src="tutorial.js?v=65"></script><script src="passengers3d.js?v=73"></script><script src="prewarm.js?v=2"></script><script src="gamefx.js?v=61"></script><script src="atmo.js?v=1"></script>
+<script src="portraits.js?v=64"></script><script src="heroportraits.js?v=60"></script><script src="npc.js?v=62"></script><script src="story.js?v=60"></script><script src="minigames.js?v=61"></script><script src="audio.js?v=60"></script><script src="game.js?v=75"></script><script src="story2.js?v=60"></script><script src="world2.js?v=68"></script><script src="story4.js?v=2"></script><script src="world3.js?v=4"></script><script src="story5.js?v=1"></script><script src="world4.js?v=8"></script><script src="story6.js?v=2"></script><script src="world5.js?v=6"></script><script src="story7.js?v=2"></script><script src="world6.js?v=7"></script><script src="story8.js?v=1"></script><script src="world7.js?v=7"></script><script src="decor.js?v=4"></script><script src="story9.js?v=3"></script><script src="story3.js?v=60"></script><script src="villain.js?v=60"></script><script src="secret.js?v=8"></script><script src="kingllm.js?v=1"></script><script src="heroes3d.js?v=73"></script><script src="tutorial.js?v=65"></script><script src="passengers3d.js?v=73"></script><script src="prewarm.js?v=2"></script><script src="gamefx.js?v=61"></script><script src="atmo.js?v=1"></script>
 <script>
 const canvas = document.getElementById('c');
 const msg = document.getElementById('msg'), bar = document.querySelector('#bar i'), status = document.getElementById('status');
