@@ -82,8 +82,8 @@
   function eye(c, e, sd, uid) {
     const young = c.age < 30, old = c.age > 58, fem = c.sex === 'f';
     const cx = 250 + sd * 47, cy = 274;
-    let w = (young ? 31 : old ? 26 : 29) * 1.06, h = (young ? 18 : old ? 12 : 15) * (fem ? 1.12 : 1);
-    const ir = (young ? 14 : old ? 10 : 12) * (fem ? 1.08 : 1);
+    let w = (young ? 31 : old ? 26 : 29) * .97, h = (young ? 18 : old ? 12 : 15) * (fem ? 1.08 : .96);
+    const ir = (young ? 14 : old ? 10 : 12) * (fem ? 1.08 : 1) * .9;
     if (e === 'smile') {
       return `<path d="M${cx - w} ${cy + 3} Q${cx} ${cy - h - 6} ${cx + w} ${cy + 3}" fill="none" stroke="#2a1812" stroke-width="5.5" stroke-linecap="round"/>` +
         (fem ? `<path d="M${cx + sd * w} ${cy + 2} l${sd * 9} -7" stroke="#2a1812" stroke-width="3" stroke-linecap="round"/>` : '') +
@@ -100,7 +100,7 @@
     const ic = c.eye, id = `ir${uid}${sd > 0 ? 'r' : 'l'}`;
     let s = `<defs><radialGradient id="${id}" cx=".5" cy=".7" r=".75"><stop offset="0" stop-color="${sh(ic, .55)}"/><stop offset=".45" stop-color="${sh(ic, .15)}"/><stop offset=".85" stop-color="${ic}"/><stop offset="1" stop-color="${sh(ic, -.55)}"/></radialGradient>` +
       `<clipPath id="cp${id}"><path d="${top} ${bot}"/></clipPath></defs>`;
-    s += `<path d="${top} ${bot}" fill="#fdf8f3"/>`;
+    s += `<path d="${top} ${bot}" fill="url(#ew${uid})"/>`;
     s += `<g clip-path="url(#cp${id})">`;
     const ix = cx - sd * 1, iy = cy + (e === 'sleepy' ? 3 : 1);
     s += `<circle cx="${ix}" cy="${iy}" r="${ir}" fill="url(#${id})"/><circle cx="${ix}" cy="${iy}" r="${ir}" fill="none" stroke="${sh(ic, -.6)}" stroke-width="1.6"/>`;
@@ -112,6 +112,7 @@
     s += `</g>`;
     // веко и ресницы
     const lw = fem ? 5.5 : 4.4;
+    s += `<path d="M${cx + sd * w * .9} ${cy + 2} C${cx + sd * w * .5} ${cy + h * .8} ${cx - sd * w * .3} ${cy + h * .85} ${cx - sd * w * .8} ${cy + h * .45}" stroke="#f3c9bd" stroke-width="2.2" fill="none" opacity=".55"/>`;
     s += `<path d="${top}" fill="none" stroke="#24140f" stroke-width="${lw}" stroke-linecap="round"/>`;
     if (fem) s += `<path d="M${xo} ${yo} q${sd * 9} -3 ${sd * 13} -11 M${cx + sd * w * .72} ${cy - h * .95} q${sd * 6} -4 ${sd * 8} -11" stroke="#24140f" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
     else s += `<path d="M${xo} ${yo} q${sd * 5} -1 ${sd * 7} -5" stroke="#24140f" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
@@ -132,7 +133,16 @@
     return `<path d="M${xi} ${yi - t * .5} Q${xm} ${ym - t * .6} ${xo} ${yo - 1} Q${xm} ${ym + t * .45} ${xi} ${yi + t * .5}Z" fill="${col}"/>` +
       `<path d="M${xi + sd * 4} ${yi - t * .2} Q${xm} ${ym - t * .3} ${xo - sd * 8} ${yo - 1}" stroke="${sh(col, .25)}" stroke-width="1" fill="none" opacity=".5"/>`;
   }
-  function nose(c) {
+  function nose(c, uid) {
+    const d = sh(c.skin, -.28), dd = sh(c.skin, -.5);
+    return `<path d="M262 250 C270 280 276 306 268 324 L254 330 C262 306 258 280 252 250Z" fill="${dd}" opacity=".32" filter="url(#f4${uid})"/>` +
+      `<ellipse cx="250" cy="337" rx="20" ry="6" fill="${dd}" opacity=".32" filter="url(#f4${uid})"/>` +
+      `<path d="M258 286 C262 302 266 316 258 326" fill="none" stroke="${d}" stroke-width="2" stroke-linecap="round" opacity=".6"/>` +
+      `<ellipse cx="241" cy="327" rx="5.5" ry="3" fill="${dd}" opacity=".6" filter="url(#f1${uid})"/><ellipse cx="260" cy="327" rx="5.5" ry="3" fill="${dd}" opacity=".6" filter="url(#f1${uid})"/>` +
+      `<ellipse cx="247" cy="296" rx="5" ry="20" fill="#fff" opacity=".2" filter="url(#f4${uid})"/><ellipse cx="249" cy="317" rx="7" ry="5" fill="#fff" opacity=".4" filter="url(#f2${uid})"/>` +
+      `<ellipse cx="251" cy="321" rx="12" ry="8" fill="#e0605a" opacity=".12" filter="url(#f4${uid})"/>`;
+  }
+  function noseOld(c) {
     const d = sh(c.skin, -.28);
     return `<path d="M258 284 C262 302 266 316 258 326 C254 330 246 331 240 327" fill="none" stroke="${d}" stroke-width="2.4" stroke-linecap="round"/>` +
       `<path d="M260 296 C266 310 266 320 258 327 L252 316Z" fill="${d}" opacity=".22"/>` +
@@ -238,14 +248,19 @@
     const sk = c.skin, skd = sh(sk, -.2), skl = sh(sk, .14), sk2 = sh(sk, -.35);
     const face = faceShape(c);
     let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 640"><defs>` +
-      `<linearGradient id="sk${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${skl}"/><stop offset=".55" stop-color="${sk}"/><stop offset="1" stop-color="${skd}"/></linearGradient>` +
+      `<radialGradient id="sk${uid}" cx=".36" cy=".34" r=".8"><stop offset="0" stop-color="${skl}"/><stop offset=".5" stop-color="${sk}"/><stop offset="1" stop-color="${skd}"/></radialGradient>` +
+      `<linearGradient id="hg${uid}" x1=".2" y1="0" x2=".8" y2="1"><stop offset="0" stop-color="${sh(c.hair, .22)}"/><stop offset=".45" stop-color="${c.hair}"/><stop offset="1" stop-color="${sh(c.hair, -.4)}"/></linearGradient>` +
+      `<linearGradient id="hk${uid}" x1=".2" y1="0" x2=".8" y2="1"><stop offset="0" stop-color="${sh(c.hatC || '#444444', .2)}"/><stop offset=".5" stop-color="${c.hatC || '#444444'}"/><stop offset="1" stop-color="${sh(c.hatC || '#444444', -.42)}"/></linearGradient>` +
+      `<radialGradient id="ew${uid}" cx=".5" cy=".55" r=".6"><stop offset=".45" stop-color="#fbf5ee"/><stop offset="1" stop-color="#d9c6b8"/></radialGradient>` +
+      [1, 2, 4, 8, 14].map(k => `<filter id="f${k}${uid}" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="${k}"/></filter>`).join('') +
       `<linearGradient id="cl${uid}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${sh(c.cloth, .16)}"/><stop offset=".55" stop-color="${c.cloth}"/><stop offset="1" stop-color="${sh(c.cloth, -.38)}"/></linearGradient>` +
       `<radialGradient id="bl${uid}"><stop offset="0" stop-color="#ff7a7a" stop-opacity=".5"/><stop offset="1" stop-color="#ff7a7a" stop-opacity="0"/></radialGradient>` +
-      `<clipPath id="fc${uid}"><path d="${face}"/></clipPath></defs>`;
+      `<clipPath id="fc${uid}"><path d="${face}"/></clipPath><clipPath id="nk${uid}"><path d="M216 372 L284 372 L294 470 Q250 492 206 470Z"/></clipPath></defs>`;
     s += hairBack(c);
     // шея
-    s += `<path d="M216 372 L284 372 L294 470 Q250 492 206 470Z" fill="${skd}"/><path d="M216 380 Q250 424 284 380 L286 414 Q250 442 214 414Z" fill="${sk2}" opacity=".5"/>`;
-    s += body(c, uid);
+    s += `<path d="M216 372 L284 372 L294 470 Q250 492 206 470Z" fill="${sh(sk, -.27)}"/><g clip-path="url(#nk${uid})"><ellipse cx="256" cy="404" rx="70" ry="36" fill="${sk2}" opacity=".85" filter="url(#f8${uid})"/>` +
+      `<path d="M280 372 L300 470 L266 480 Z" fill="${sk2}" opacity=".45" filter="url(#f8${uid})"/></g>`;
+    s += body(c, uid) + `<ellipse cx="256" cy="472" rx="96" ry="22" fill="#000" opacity=".32" filter="url(#f8${uid})"/>`;
     // уши
     for (const sd of [-1, 1]) {
       const ex = 250 + sd * 92;
@@ -253,19 +268,26 @@
     }
     if (c.earrings) s += `<circle cx="154" cy="314" r="7" fill="#f6f1e8"/><circle cx="346" cy="314" r="7" fill="#f6f1e8"/>`;
     // лицо и светотень
-    s += `<path d="${face}" fill="url(#sk${uid})" stroke="${sh(sk, -.42)}" stroke-width="2.2"/>`;
+    s += `<path d="${face}" fill="url(#sk${uid})" stroke="${sh(sk, -.42)}" stroke-width="2" stroke-opacity=".7"/>`;
     s += `<g clip-path="url(#fc${uid})">`;
-    s += `<path d="M300 140 Q356 210 342 310 Q326 392 268 432 L340 440 L360 120Z" fill="${sk2}" opacity=".28"/>`;          // тень справа
-    s += `<path d="M150 200 Q250 168 350 200 L350 150 L150 150Z" fill="${sk2}" opacity=".35"/>`;                              // тень от волос/шапки
-    s += `<ellipse cx="250" cy="420" rx="60" ry="14" fill="${sk2}" opacity=".18"/>`;
-    s += `<ellipse cx="205" cy="300" rx="22" ry="12" fill="#fff" opacity=".12"/>`;
+    const F = k => `filter="url(#f${k}${uid})"`;
+    s += `<path d="M296 130 Q362 210 346 314 Q330 398 262 440 L360 450 L370 120Z" fill="${sk2}" opacity=".42" ${F(14)}/>`;     // теневая сторона
+    s += `<path d="M140 130 L360 130 L360 196 Q250 172 140 196Z" fill="${sk2}" opacity=".5" ${F(8)}/>`;                     // тень от волос/шапки
+    s += `<ellipse cx="203" cy="262" rx="36" ry="19" fill="${sk2}" opacity=".26" ${F(8)}/><ellipse cx="299" cy="262" rx="36" ry="19" fill="${sk2}" opacity=".36" ${F(8)}/>`; // глазные впадины
+    s += `<path d="M172 300 Q190 352 216 372 L196 380 Q170 350 164 300Z" fill="${sk2}" opacity=".18" ${F(8)}/><path d="M328 300 Q312 352 286 372 L306 384 Q334 350 338 300Z" fill="${sk2}" opacity=".32" ${F(8)}/>`; // под скулами
+    s += `<ellipse cx="250" cy="438" rx="96" ry="26" fill="${sk2}" opacity=".4" ${F(8)}/>`;                                // низ челюсти
+    s += `<ellipse cx="226" cy="196" rx="52" ry="24" fill="#fff" opacity=".2" ${F(8)}/>`;                                   // блик на лбу
+    s += `<ellipse cx="198" cy="306" rx="28" ry="15" fill="#fff" opacity=".16" ${F(8)}/>`;                                  // блик на скуле
+    s += `<ellipse cx="246" cy="404" rx="22" ry="10" fill="#fff" opacity=".14" ${F(4)}/>`;                                  // подбородок
+    s += `<ellipse cx="196" cy="330" rx="30" ry="16" fill="#e8645c" opacity="${c.sex === 'f' || c.age < 30 ? .2 : .1}" ${F(8)}/><ellipse cx="304" cy="330" rx="30" ry="16" fill="#e8645c" opacity="${c.sex === 'f' || c.age < 30 ? .16 : .08}" ${F(8)}/>`; // живой румянец
+    s += `<path d="${face}" fill="none" stroke="#d8e4ff" stroke-width="12" opacity=".13" transform="translate(-7 0)" ${F(4)}/>`; // холодный контровой свет справа
     if (c.blush || c.sex === 'f') { s += `<ellipse cx="197" cy="322" rx="26" ry="13" fill="url(#bl${uid})" opacity="${c.age > 55 ? .4 : .9}"/><ellipse cx="303" cy="322" rx="26" ry="13" fill="url(#bl${uid})" opacity="${c.age > 55 ? .4 : .9}"/>`; }
     if (c.stubble) s += `<path d="M176 326 Q190 394 222 412 Q250 430 278 412 Q310 394 324 326 Q302 380 250 384 Q198 380 176 326Z" fill="${c.stubble}" opacity=".25"/>`;
     s += `</g>`;
     if (c.freckles) s += [[190, 306], [202, 312], [212, 304], [292, 304], [300, 312], [310, 306]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2" fill="#b07040" opacity=".6"/>`).join('');
     if (c.wrinkles) s += `<path d="M206 206 Q250 198 294 206 M214 192 Q250 184 286 192" stroke="${sk2}" stroke-width="1.6" fill="none" opacity=".45"/><path d="M216 328 Q206 352 222 374 M284 328 Q294 352 278 374" stroke="${sk2}" stroke-width="2" fill="none" opacity="${c.wrinkles > 1 ? .6 : .35}"/>`;
     if (c.scar) s += `<path d="M302 230 L324 300 M306 248 l10 -4 M312 264 l10 -4 M318 282 l10 -4" stroke="#a8665a" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>`;
-    s += eye(c, e, -1, uid) + eye(c, e, 1, uid) + brow(c, e, -1) + brow(c, e, 1) + nose(c);
+    s += eye(c, e, -1, uid) + eye(c, e, 1, uid) + brow(c, e, -1) + brow(c, e, 1) + nose(c, uid);
     if (c.stitches) s += `<path d="M190 210 Q250 190 312 214" stroke="#5a4428" stroke-width="2.5" fill="none" stroke-dasharray="7 6"/>` + [196, 214, 232, 250, 268, 286, 304].map(x => `<path d="M${x} ${206 - Math.abs(x - 250) * -.04} l0 10" stroke="#5a4428" stroke-width="2.5"/>`).join('') +
       `<path d="M168 300 Q200 330 214 380 M272 384 Q300 362 330 330" stroke="#5a4428" stroke-width="2.5" fill="none" stroke-dasharray="6 6"/>`;
     if (c.buttonEye) s += `<circle cx="297" cy="272" r="23" fill="#2a2a30"/><circle cx="297" cy="272" r="18" fill="#3c3c46"/><circle cx="291" cy="266" r="6" fill="#55556a" opacity=".6"/>` + [[-6, -6], [6, -6], [-6, 6], [6, 6]].map(([dx, dy]) => `<circle cx="${297 + dx}" cy="${272 + dy}" r="3" fill="#15151a"/>`).join('') + `<path d="M291 266 L303 278 M303 266 L291 278" stroke="#cdb48a" stroke-width="2"/>`;
@@ -274,7 +296,11 @@
     if (c.roundGlasses) s += `<circle cx="203" cy="274" r="25" fill="#ffffff18" stroke="#b08a40" stroke-width="2.6"/><circle cx="297" cy="274" r="25" fill="#ffffff18" stroke="#b08a40" stroke-width="2.6"/><path d="M228 272 Q250 265 272 272 M178 270 L158 264 M322 270 L342 264" stroke="#b08a40" stroke-width="2.6" fill="none"/><path d="M188 262 l10 -6 M282 262 l10 -6" stroke="#fff" stroke-width="2" opacity=".6"/>`;
     if (c.glasses && c.chain) s += `<path d="M158 264 Q138 360 168 470 M342 264 Q362 360 332 470" stroke="#c9a35a" stroke-width="1.6" fill="none"/>`;
     if (c.glasses) s += `<rect x="176" y="254" width="56" height="40" rx="12" fill="#ffffff1a" stroke="#3a3228" stroke-width="3"/><rect x="268" y="254" width="56" height="40" rx="12" fill="#ffffff1a" stroke="#3a3228" stroke-width="3"/><path d="M232 272 Q250 264 268 272 M176 268 L158 262 M324 268 L342 262" stroke="#3a3228" stroke-width="3" fill="none"/><path d="M186 262 l12 -4 M278 262 l12 -4" stroke="#fff" stroke-width="2" opacity=".55"/>`;
-    s += hairFront(c) + hat(c);
+    { let hf = hairFront(c).split(`fill="${c.hair}"`).join(`fill="url(#hg${uid})"`).split('opacity=".45" stroke-linecap="round"/>').join(`opacity=".4" stroke-linecap="round" filter="url(#f2${uid})"/>`);
+      let ht = c.hat ? hat(c).split(`fill="${c.hatC}"`).join(`fill="url(#hk${uid})"`) : '';
+      // тень волос/шапки на лбу — поверх лица, под волосами
+      if (c.hairStyle !== 'bald' || c.hat) s += `<g clip-path="url(#fc${uid})"><path d="M150 150 Q250 120 350 150 L350 ${c.hat ? 236 : 214} Q250 ${c.hat ? 206 : 186} 150 ${c.hat ? 236 : 214}Z" fill="#1a0c06" opacity=".22" filter="url(#f8${uid})"/></g>`;
+      s += hf + ht; }
     if (c.earphones) s += `<path d="M156 300 Q150 380 200 470 M344 300 Q352 380 300 470" stroke="#f2f2f2" stroke-width="3" fill="none"/><circle cx="156" cy="296" r="9" fill="#f2f2f2"/><circle cx="344" cy="296" r="9" fill="#f2f2f2"/>`;
     if (c.card) s += `<g transform="rotate(-14 410 520)"><rect x="380" y="470" width="62" height="88" rx="6" fill="#fbf8f2" stroke="#2a2a2a" stroke-width="2"/><text x="392" y="496" font-size="22" font-family="Georgia" fill="#b02a2a">A</text><path d="M411 512 q-14 -14 0 -22 q14 8 0 22Z M411 512 q-12 4 -16 16 q16 -2 16 -16Z M411 512 q12 4 16 16 q-16 -2 -16 -16Z" fill="#b02a2a"/></g>`;
     if (c.crow) s += `<g transform="translate(366 452)"><path d="M-40 18 Q-10 -30 34 -20 Q60 -14 70 -2 L88 2 L70 8 Q58 24 30 30 Q0 40 -40 18Z" fill="#141418"/><path d="M-36 20 Q-60 34 -78 30 Q-60 18 -40 14Z" fill="#141418"/><path d="M-20 4 Q10 -10 40 -4" stroke="#2c2c3a" stroke-width="3" fill="none"/><circle cx="50" cy="-6" r="4.5" fill="#e8d870"/><circle cx="51" cy="-7" r="1.5" fill="#111"/></g>`;
