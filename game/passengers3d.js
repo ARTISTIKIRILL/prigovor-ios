@@ -300,7 +300,11 @@
     needCompile = false;
     const hidden = [], flip = [];
     for (const st of ALL) if (st.m3 && !st.m3.holder.parent) { showHolder(st, true); hidden.push(st); }
-    scene.traverse(o => { if (!o.visible) { o.visible = true; flip.push(o); } });
+    // лампы не включаем (иначе шейдеры соберутся под чужое число ламп и не пригодятся), чужие локации не трогаем
+    const cur = window.WORLD ? WORLD.cur : 'train', away = new Set();
+    if (window.WORLD && WORLD.LOC) for (const k in WORLD.LOC) if (k !== cur && WORLD.LOC[k].group) away.add(WORLD.LOC[k].group);
+    if (cur !== 'train' && window.TRAIN_ROOT) away.add(TRAIN_ROOT);
+    (function walk(o) { if (away.has(o) || o.isLight) return; if (!o.visible) { o.visible = true; flip.push(o); } o.children.forEach(walk); })(scene);
     try { renderer.compile(scene, camera); } catch (e) { console.warn(e); }
     flip.forEach(o => { o.visible = false; });
     hidden.forEach(st => showHolder(st, false));
