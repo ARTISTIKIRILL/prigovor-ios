@@ -24,7 +24,7 @@ final class GameFiles: NSObject, WKURLSchemeHandler {
     static let mime: [String: String] = [
         "html": "text/html", "js": "text/javascript", "mjs": "text/javascript", "json": "application/json",
         "txt": "text/plain", "css": "text/css", "png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
-        "svg": "image/svg+xml", "mp3": "audio/mpeg", "ogg": "audio/ogg", "wav": "audio/wav",
+        "svg": "image/svg+xml", "webp": "image/webp", "mp3": "audio/mpeg", "ogg": "audio/ogg", "wav": "audio/wav",
         "gz": "application/octet-stream", "glb": "model/gltf-binary", "woff2": "font/woff2"
     ]
     let root: URL = Bundle.main.resourceURL!.appendingPathComponent("game")

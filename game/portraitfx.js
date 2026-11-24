@@ -5,11 +5,37 @@
   const base = window.portraitSVG;
   if (!base) return;
   let n = 0;
-  // герои — гравюра по их 3D-моделям (por_eng.js); картинка ложится ровно в видимое окно медальона (см. CSS-зум #portrait)
-  const ENGID = { margaretP: 'margaret', margaretN: 'margaret' };
+  // все портреты — гравюры по 3D-моделям (por_eng.js, файлы por/<id>.webp); картинка ложится ровно в видимое окно медальона (см. CSS-зум #portrait)
+  const ENGID = { margaretP: 'margaret', margaretN: 'margaret', smotritelN: 'smotritel' };
+  const ENGSET = new Set(window.ENGPOR || []);
+  // канон: каждая распознанная ложь оставляет на лице Агаты новую трещину, как кракелюр на иконе (S.f.agLies, до 10)
+  function cracks() {
+    const n = Math.min(10, (window.S && S.f && S.f.agLies) || 0); if (!n) return '';
+    let r = 7, out = '';
+    const rnd = () => (r = (r * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < n; i++) {
+      const sd = i % 2 ? 1 : -1, x0 = 220 + sd * (16 + rnd() * 8), y0 = 214 + rnd() * 6;
+      let x = x0, y = y0, d = `M${x.toFixed(1)} ${y.toFixed(1)}`; const len = 3 + Math.floor(rnd() * 3);
+      for (let k = 0; k < len; k++) { x += (rnd() - .5) * 4 + sd * rnd() * 1.4; y += 4 + rnd() * 5; d += ` L${x.toFixed(1)} ${y.toFixed(1)}`; }
+      const fresh = i === n - 1 ? ' class="fresh"' : '';
+      out += `<path${fresh} d="${d}" stroke="#20130f" stroke-width="${(1 + rnd() * .7).toFixed(2)}" fill="none" stroke-linejoin="bevel" stroke-linecap="round" opacity=".85"/>`;
+      if (rnd() < .5) { const bx = x0 + sd * 3, by = y0 + 9; out += `<path d="M${bx.toFixed(1)} ${by.toFixed(1)} l${(sd * (3 + rnd() * 3)).toFixed(1)} ${(4 + rnd() * 4).toFixed(1)}" stroke="#20130f" stroke-width=".9" fill="none" opacity=".75"/>`; }
+    }
+    return out;
+  }
+  const _buff = window.showBuff;
+  if (_buff) window.showBuff = function (text, neg, hero) {
+    const h = hero || (window.S && S.hero);
+    if (h === 'agata' && !neg && window.S && S.f) {
+      S.f.agLies = (S.f.agLies || 0) + 1;
+      const pr = document.getElementById('portraitR');   // портрет Агаты в открытом диалоге обновляем сразу
+      if (pr && typeof porRId !== 'undefined' && porRId === 'agata') pr.innerHTML = window.portraitSVG('agata', 'worried');
+    }
+    return _buff.apply(this, arguments);
+  };
   window.portraitSVG = function (id, expr) {
-    const eg = window.ENGPOR && !/[?&]oldpor/.test(location.search) && ENGPOR[ENGID[id] || id];
-    if (eg) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 640" data-eng="1"><image href="${eg}" x="104.5" y="94.5" width="291" height="352.5" preserveAspectRatio="xMidYMid slice"/></svg>`;
+    const ei = ENGID[id] || id;
+    if (ENGSET.has(ei) && !/[?&]oldpor/.test(location.search)) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 640" data-eng="1" data-x="${expr || 'neutral'}"><image href="por/${ei}.webp" x="96" y="84" width="308" height="374" preserveAspectRatio="xMidYMid slice"/>${ei === 'agata' ? cracks() : ''}</svg>`;
     const s = window.NOIR && NOIR.has(id) ? NOIR.svg(id, expr) : base(id, expr);   // нуар-стиль — для всех, включая героев
     if (!s || s.indexOf('</svg>') < 0) return s;
     const u = 'pfx' + (n++);
