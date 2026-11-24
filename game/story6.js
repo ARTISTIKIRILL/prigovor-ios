@@ -55,18 +55,18 @@
   S.locs.ball = {
     title: 'Бал в Чернолесье',
     quests: [
-      ['b_solved', 'Дело закрыто.'],
-      ['b_ready', 'Улик хватит. Обвини барона Светозарова — при капитане.'],
-      ['b_dead', 'Сборщик долгов убит. Капитан Седой винит графиню. На рассвете конвой увезёт её.'],
+      ['k_solved', 'Дело закрыто.'],
+      ['k_ready', 'Улик хватит. Обвини барона Светозарова — при капитане.'],
+      ['k_dead', 'Сборщик долгов убит. Капитан Седой винит графиню. На рассвете конвой увезёт её.'],
       ['', 'Около полуночи на балу убьют сборщика долгов Палаты. Все улики будут указывать на графиню.']
     ],
     leads: [
-      ['b_ready', 'Барон Светозаров в бальном зале.', 'npc:svetozarov'],
-      ['b_dead&!notBloodless', 'Тело в библиотеке. Посмотри на ковёр.', 'insp:bodyB'],
-      ['b_dead&!pageDebt', 'В камине библиотеки что-то не догорело.', 'insp:fireplace'],
-      ['b_dead&!forkMarfa&!seatPlan', 'Ранки — от двузубой вилки? Марфа убирала серебро.', 'npc:marfa'],
+      ['k_ready', 'Барон Светозаров в бальном зале.', 'npc:svetozarov'],
+      ['k_dead&!notBloodless', 'Тело в библиотеке. Посмотри на ковёр.', 'insp:bodyB'],
+      ['k_dead&!pageDebt', 'В камине библиотеки что-то не догорело.', 'insp:fireplace'],
+      ['k_dead&!forkMarfa&!seatPlan', 'Ранки — от двузубой вилки? Марфа убирала серебро.', 'npc:marfa'],
       ['yanSaw&!gloveBlood', 'Барон ходил в оранжерею. Проверь кадки с пальмами.', 'insp:palmTub'],
-      ['b_dead&!yanSaw', 'Скрипач на хорах видел весь зал.', 'npc:yan'],
+      ['k_dead&!yanSaw', 'Скрипач на хорах видел весь зал.', 'npc:yan'],
       ['gloveBlood&!irinaDebt', 'Покажи перчатки баронессе.', 'npc:irina']
     ]
   };
@@ -94,9 +94,9 @@
       m1: { bg: 'none', lines: [
         [null, null, '00:10. Вальс обрывается на полутакте. С кухонного коридора — женский крик.'],
         [null, null, 'В библиотеке на ковре лежит сборщик долгов Палаты, Лукьян Мытарь. На шее — две ранки.'],
-        ['sedoy', 'angry', 'Обескровлен! Следы клыков! Все видят? Это она. Хозяйка. На рассвете забираем.']], route: [['b_rowenSedoy|b_rowen', 'm2'], ['', 'm3']] },
-      m2: { lines: [['sedoy', 'neutral', '…Впрочем, раз старший по чину велит — до утра графиню не трогаем. Но с рассветом — в карету.']], set: ['b_dead'], end: true },
-      m3: { lines: [[null, null, 'Графиню ставят у камина под охраной двух конвойных. Она стоит прямо и смотрит на капитана так, что тот отводит глаза.']], set: ['b_dead', 'b_guard'], end: true } } },
+        ['sedoy', 'angry', 'Обескровлен! Следы клыков! Все видят? Это она. Хозяйка. На рассвете забираем.']], route: [['k_rowenSedoy|k_rowen', 'm2'], ['', 'm3']] },
+      m2: { lines: [['sedoy', 'neutral', '…Впрочем, раз старший по чину велит — до утра графиню не трогаем. Но с рассветом — в карету.']], set: ['k_dead'], end: true },
+      m3: { lines: [[null, null, 'Графиню ставят у камина под охраной двух конвойных. Она стоит прямо и смотрит на капитана так, что тот отводит глаза.']], set: ['k_dead', 'k_guard'], end: true } } },
     ballDawn: { start: 'd1', nodes: {
       d1: { bg: 'fog', lines: [[null, null, 'Рассвет. Над чёрным лесом серая полоса. Конвой выводит графиню к карете, изгнанники бегут следом по снегу.'], [null, null, 'Где-то переворачиваются Песочные Часы.']], do: 'ballRollback' } } },
     ballLoop: { start: 'l1', nodes: {
@@ -130,33 +130,33 @@
   const FALSE = (who, ex, line) => ({ lines: [[who, ex, line], [null, null, 'Обвинение мимо. До рассвета всё меньше времени.']], time: 30, end: true });
   Object.assign(S.dialogs, {
     margaret: {
-      start: [['b_solved', 'solved'], ['', 'hub']],
+      start: [['k_solved', 'solved'], ['', 'hub']],
       nodes: {
-        hub: { lines: [], route: [['b_dead', 'hubD'], ['', 'hub0']] },
+        hub: { lines: [], route: [['k_dead', 'hubD'], ['', 'hub0']] },
         hub0: { lines: [['margaret', 'neutral', 'Нравится бал? Половина гостей пришла посмотреть на вампира. Другая половина — должна мне денег.']], go: 'menu' },
         hubD: { lines: [['margaret', 'neutral', 'Капитан уже выбрал виновную. Вы тоже? Или вам интересна правда — она обычно дороже.']], go: 'menu' },
         menu: { lines: [], choices: [
-          { t: 'Обвинить: сборщика убили вы, графиня.', go: 'acc', if: 'b_dead' },
-          { t: 'Я не верю капитану. Помогите мне.', go: 'trust', if: 'b_dead', hide: 'b_trust2' },
-          { t: 'Зачем вы позвали сборщика долгов?', go: 'why', hide: 'b_trust1' },
-          { t: 'Чья кровь на этой перчатке?', go: 'glove', if: 'gloveBlood&b_trust2', hide: 'margGlove' },
-          { t: 'Вы чуете, сколько крови он потерял?', go: 'blood', if: 'b_dead&b_trust2', hide: 'margBlood' },
-          { t: 'Зайдите со мной в комнату Светозаровых.', go: 'invite', if: 'b_dead', hide: 'b_inv' },
+          { t: 'Обвинить: сборщика убили вы, графиня.', go: 'acc', if: 'k_dead' },
+          { t: 'Я не верю капитану. Помогите мне.', go: 'trust', if: 'k_dead', hide: 'k_trust2' },
+          { t: 'Зачем вы позвали сборщика долгов?', go: 'why', hide: 'k_trust1' },
+          { t: 'Чья кровь на этой перчатке?', go: 'glove', if: 'gloveBlood&k_trust2', hide: 'margGlove' },
+          { t: 'Вы чуете, сколько крови он потерял?', go: 'blood', if: 'k_dead&k_trust2', hide: 'margBlood' },
+          { t: 'Зайдите со мной в комнату Светозаровых.', go: 'invite', if: 'k_dead', hide: 'k_inv' },
           { t: 'Уйти', exit: true }] },
-        why: { lines: [['margaret', 'smile', 'Честно? Я скупила долги барона. А сборщик привёз книгу с долгами половины ясноземской знати. Я хотела прижать обоих — и барона, и Палату.'], ['margaret', 'neutral', 'Видите, я с вами откровенна. Это редкость. Цените.']], set: ['b_trust1'], go: 'menu' },
-        trust: { lines: [['margaret', 'neutral', 'Не верите капитану? Это уже немало.'], ['margaret', 'smile', 'Хорошо. Спрашивайте. Я отвечу — один раз и честно.']], set: ['b_trust2'], go: 'menu' },
+        why: { lines: [['margaret', 'smile', 'Честно? Я скупила долги барона. А сборщик привёз книгу с долгами половины ясноземской знати. Я хотела прижать обоих — и барона, и Палату.'], ['margaret', 'neutral', 'Видите, я с вами откровенна. Это редкость. Цените.']], set: ['k_trust1'], go: 'menu' },
+        trust: { lines: [['margaret', 'neutral', 'Не верите капитану? Это уже немало.'], ['margaret', 'smile', 'Хорошо. Спрашивайте. Я отвечу — один раз и честно.']], set: ['k_trust2'], go: 'menu' },
         blood: { lines: [['margaret', 'neutral', 'Чую. Отсюда. Он истёк кровью на ковре, там, где лежит. Если бы это была я — вы бы не нашли ни капли. Я не трачу зря.']], clue: 'margBlood', go: 'menu' },
         glove: { lines: [[null, null, 'Графиня подносит перчатку к лицу и закрывает глаза.'], ['margaret', 'neutral', 'Мытарь. Его кровь — горькая, как чернила. Он всю жизнь считал чужие долги.']], clue: 'margGlove', go: 'menu' },
-        invite: { lines: [['margaret', 'sad', 'Не могу. На эту ночь их комната — их дом. Я не войду без приглашения баронессы. Даже в собственном замке.'], ['det', null, 'Вот оно что. Ей нужен хозяин, который доверяет. Без него — ни шагу.']], set: ['b_inv'], go: 'menu' },
+        invite: { lines: [['margaret', 'sad', 'Не могу. На эту ночь их комната — их дом. Я не войду без приглашения баронессы. Даже в собственном замке.'], ['det', null, 'Вот оно что. Ей нужен хозяин, который доверяет. Без него — ни шагу.']], set: ['k_inv'], go: 'menu' },
         acc: { lines: [['margaret', 'sad', 'Значит, клыки. Конечно. Всегда клыки.']], choices: [
           { t: 'Да. Вы убили его.', go: 'accY' },
           { t: 'Нет. Я ошибся.', go: 'menu' }] },
-        accY: { lines: [], set: ['b_solved', 'b_wrong', 'margCaptive'], do: 'ballWrongFinale' },
+        accY: { lines: [], set: ['k_solved', 'k_wrong', 'margCaptive'], do: 'ballWrongFinale' },
         solved: { lines: [['margaret', 'smile', 'Чертёж у меня. Когда будет нужно — я рядом.']], end: true }
       }
     },
     svetozarov: {
-      start: [['b_solved', 'solved'], ['', 'hub']],
+      start: [['k_solved', 'solved'], ['', 'hub']],
       nodes: {
         hub: H4('h'),
         hN: { lines: [['svetozarov', 'smug', 'А, ещё одна маска. Скучный бал. Вампиры, изгнанники… В Ясноземье хоть музыка приличная.']], go: 'menu' },
@@ -165,15 +165,15 @@
         hA: { lines: [['svetozarov', 'neutral', 'Сестра милосердия на балу у вампира. Восхитительно.']], go: 'menu' },
         hT: { lines: [['svetozarov', 'smug', 'Маркиз? Не припомню такого рода. Впрочем, нынче все маркизы.']], go: 'menu' },
         menu: { lines: [], choices: [
-          { t: 'Обвинить: сборщика убили вы, барон.', go: 'acc', if: 'b_ready' },
-          { t: 'Где вы были около полуночи?', go: 'where', if: 'b_dead', hide: 'b_swhere' },
-          { t: 'Отчего у вас перчатки без герба?', go: 'gloves', if: 'gloveSwap|gloveBlood', hide: 'b_sglove' },
-          { t: 'Обвинить: сборщика убили вы, барон.', go: 'accEarly', if: '!b_ready&b_dead' },
+          { t: 'Обвинить: сборщика убили вы, барон.', go: 'acc', if: 'k_ready' },
+          { t: 'Где вы были около полуночи?', go: 'where', if: 'k_dead', hide: 'k_swhere' },
+          { t: 'Отчего у вас перчатки без герба?', go: 'gloves', if: 'gloveSwap|gloveBlood', hide: 'k_sglove' },
+          { t: 'Обвинить: сборщика убили вы, барон.', go: 'accEarly', if: '!k_ready&k_dead' },
           { t: 'Уйти', exit: true }] },
         where: { lines: [['svetozarov', 'neutral', 'Танцевал. Весь вечер танцевал, спросите кого угодно.']], route: [['hero:agata', 'whereA'], ['', 'whereN']] },
-        whereA: { lines: [['det', null, 'Ложь. Гладкая, заученная — и всё равно ложь.']], clue: 'baronLie', buff: 'Агата чувствует ложь', set: ['b_swhere'], go: 'menu' },
-        whereN: { lines: [[null, null, 'Барон поправляет перчатку. Простая белая перчатка, без вышивки.']], set: ['b_swhere'], go: 'menu' },
-        gloves: { lines: [['svetozarov', 'angry', 'Пролил вино. Сменил. Вас что, интересует мой гардероб?']], set: ['b_sglove'], go: 'menu' },
+        whereA: { lines: [['det', null, 'Ложь. Гладкая, заученная — и всё равно ложь.']], clue: 'baronLie', buff: 'Агата чувствует ложь', set: ['k_swhere'], go: 'menu' },
+        whereN: { lines: [[null, null, 'Барон поправляет перчатку. Простая белая перчатка, без вышивки.']], set: ['k_swhere'], go: 'menu' },
+        gloves: { lines: [['svetozarov', 'angry', 'Пролил вино. Сменил. Вас что, интересует мой гардероб?']], set: ['k_sglove'], go: 'menu' },
         accEarly: { lines: [['svetozarov', 'smug', 'Я? Барон Светозаров? Это вампир, милейший. Капитан Палаты уже всё сказал.'], [null, null, 'Мало. Нужно: что тело не обескровлено, кровь на перчатке и чем — или зачем — убивали.']], time: 10, end: true },
         acc: { lines: [['svetozarov', 'angry', 'Вы рехнулись! Клыки на шее — все видели!']], go: 'e1' },
         e1: { evReset: true, evidence: { q: 'Почему это не вампир?', ok: ['notBloodless', 'palataLieB', 'margBlood', 'woundsMetal'], next: 'e2', fail: 'eFail' } },
@@ -185,60 +185,60 @@
         conf: { lines: [
           ['svetozarov', 'angry', 'Да! Да, я! Сорок тысяч крон и титул! Он стоял и считал вслух, сколько стоит мой род!'],
           ['svetozarov', 'worried', 'Вилка была под рукой. Её вензель… я подумал — все решат на неё. Все и решили.'],
-          ['svetozarov', 'smug', 'Капитан! Скажите им. Вы же знаете, кто я.']], set: ['b_solved'], do: 'ballFinale' },
+          ['svetozarov', 'smug', 'Капитан! Скажите им. Вы же знаете, кто я.']], set: ['k_solved'], do: 'ballFinale' },
         solved: { lines: [['svetozarov', 'angry', 'Это ещё не конец.']], end: true }
       }
     },
     irina: {
-      start: [['b_solved', 'solved'], ['', 'hub']],
+      start: [['k_solved', 'solved'], ['', 'hub']],
       nodes: {
         hub: { lines: [['irina', 'worried', 'Простите, я не в настроении для вальса. Аристарх… барон где-то в зале.']], go: 'menu' },
         menu: { lines: [], choices: [
           { t: 'Узнаёте эти перчатки? Герб ваш.', go: 'show', if: 'gloveBlood', hide: 'irinaDebt' },
-          { t: 'Ваш муж менял перчатки?', go: 'swap', if: 'b_dead', hide: 'gloveSwap' },
-          { t: 'Вы позволите графине войти к вам?', go: 'inv', if: 'b_inv', hide: 'b_iinv' },
+          { t: 'Ваш муж менял перчатки?', go: 'swap', if: 'k_dead', hide: 'gloveSwap' },
+          { t: 'Вы позволите графине войти к вам?', go: 'inv', if: 'k_inv', hide: 'k_iinv' },
           { t: 'Уйти', exit: true }] },
         swap: { lines: [['irina', 'neutral', 'Менял? Да… к полуночи он был в других. Простых, без герба. Я ещё удивилась — он без герба из дома не выходит.']], clue: 'gloveSwap', go: 'menu' },
         show: { lines: [[null, null, 'Баронесса бледнеет и садится, не глядя, куда.'], ['irina', 'sad', 'Это его. Господи. Мы разорены. Аристарх заложил всё, даже моё приданое. Если бы книга дошла до Палаты — титул, дом, всё…'], ['irina', 'worried', 'Он сказал: «Нет книги — нет долга». Я думала, он её выкупит.']], clue: 'irinaDebt', go: 'menu' },
-        inv: { lines: [['irina', 'surprised', 'Графине? Ко мне?.. Нет. Нет, простите. Я боюсь её.']], set: ['b_iinv'], go: 'menu' },
+        inv: { lines: [['irina', 'surprised', 'Графине? Ко мне?.. Нет. Нет, простите. Я боюсь её.']], set: ['k_iinv'], go: 'menu' },
         solved: { lines: [['irina', 'sad', 'Что теперь с нами будет?']], end: true }
       }
     },
     sedoy: {
-      start: [['b_solved', 'solved'], ['', 'hub']],
+      start: [['k_solved', 'solved'], ['', 'hub']],
       nodes: {
         hub: H4('h'),
         hN: { lines: [['sedoy', 'neutral', 'Конвой Палаты. По особому распоряжению. Проходите, гость, не толпитесь у дверей.']], go: 'menu' },
-        hR: { buff: 'Ровен: капитан подчиняется старшему по чину', lines: [['sedoy', 'neutral', 'Господин рыцарь! Виноват, не признал под маской. Капитан Седой, конвой Палаты. Слушаю.']], set: ['b_rowen'], go: 'menu' },
+        hR: { buff: 'Ровен: капитан подчиняется старшему по чину', lines: [['sedoy', 'neutral', 'Господин рыцарь! Виноват, не признал под маской. Капитан Седой, конвой Палаты. Слушаю.']], set: ['k_rowen'], go: 'menu' },
         hM: { lines: [['sedoy', 'smug', 'Маска ворона. Ха. Тут каждый второй — ворон.']], go: 'menu' },
         hA: { lines: [['sedoy', 'neutral', 'Сестра. Вам здесь не место. Это дом нечисти.']], go: 'menu' },
         hT: { lines: [['sedoy', 'neutral', 'Маркиз. Документы при вас? Шучу. Пока шучу.']], go: 'menu' },
         menu: { lines: [], choices: [
-          { t: 'Зачем конвой Палаты на балу?', go: 'why', hide: 'b_swhy' },
-          { t: 'Откуда вы знали, что тело обескровлено?', go: 'how', if: 'notBloodless', hide: 'b_show' },
-          { t: 'Отложить арест графини до утра. Приказ.', go: 'delay', if: 'hero:rowen&!b_dead', hide: 'b_rowenSedoy', buff: 'Ровен: капитан подчиняется старшему по чину' },
-          { t: 'Обвинить: сборщика убили вы, капитан.', go: 'acc', if: 'b_dead' },
+          { t: 'Зачем конвой Палаты на балу?', go: 'why', hide: 'k_swhy' },
+          { t: 'Откуда вы знали, что тело обескровлено?', go: 'how', if: 'notBloodless', hide: 'k_show' },
+          { t: 'Отложить арест графини до утра. Приказ.', go: 'delay', if: 'hero:rowen&!k_dead', hide: 'k_rowenSedoy', buff: 'Ровен: капитан подчиняется старшему по чину' },
+          { t: 'Обвинить: сборщика убили вы, капитан.', go: 'acc', if: 'k_dead' },
           { t: 'Уйти', exit: true }] },
-        why: { lines: [['sedoy', 'neutral', 'Сопровождаем сборщика. Человек Палаты, ценный груз. Книга, бумаги.'], [null, null, 'На кокарде капитана — белая лилия с глазом.']], clue: 'lilyConvoy', set: ['b_swhy'], go: 'menu' },
-        how: { lines: [['sedoy', 'angry', 'Так написано… То есть так очевидно! Клыки же!'], ['det', null, '«Так написано». Он знал заранее, что напишут в досье.']], set: ['b_show'], go: 'menu' },
-        delay: { lines: [['det', null, 'Капитан. Что бы ни случилось — до утра никого не арестовывать. Под мою ответственность.'], ['sedoy', 'neutral', 'Есть, господин рыцарь. До утра.']], set: ['b_rowenSedoy'], go: 'menu' },
+        why: { lines: [['sedoy', 'neutral', 'Сопровождаем сборщика. Человек Палаты, ценный груз. Книга, бумаги.'], [null, null, 'На кокарде капитана — белая лилия с глазом.']], clue: 'lilyConvoy', set: ['k_swhy'], go: 'menu' },
+        how: { lines: [['sedoy', 'angry', 'Так написано… То есть так очевидно! Клыки же!'], ['det', null, '«Так написано». Он знал заранее, что напишут в досье.']], set: ['k_show'], go: 'menu' },
+        delay: { lines: [['det', null, 'Капитан. Что бы ни случилось — до утра никого не арестовывать. Под мою ответственность.'], ['sedoy', 'neutral', 'Есть, господин рыцарь. До утра.']], set: ['k_rowenSedoy'], go: 'menu' },
         acc: FALSE('sedoy', 'smug', 'Я? Я всю ночь у ворот с конвоем стоял — спросите любого изгнанника на кухне.'),
         solved: { lines: [['sedoy', 'smug', 'Служба.']], end: true }
       }
     },
     marfa: {
-      start: [['b_solved', 'solved'], ['', 'hub']],
+      start: [['k_solved', 'solved'], ['', 'hub']],
       nodes: {
         hub: { lines: [], route: [['hero:agata', 'hubA'], ['', 'hubN']] },
         hubN: { lines: [['marfa', 'worried', 'Я ничего не знаю, господин. Я посуду мою. Меня не трогайте.']], go: 'menu' },
-        hubA: { buff: 'Агата: изгнанница ей доверяет', lines: [['marfa', 'smile', 'Сестрица… Я ведь хлеб из ваших рук брала, давно, у сестёр Ока. Вам — всё скажу.']], set: ['b_mtrust'], go: 'menu' },
+        hubA: { buff: 'Агата: изгнанница ей доверяет', lines: [['marfa', 'smile', 'Сестрица… Я ведь хлеб из ваших рук брала, давно, у сестёр Ока. Вам — всё скажу.']], set: ['k_mtrust'], go: 'menu' },
         menu: { lines: [], choices: [
-          { t: 'Ты убирала серебро. Всё на месте?', go: 'fork', if: 'b_dead&b_mtrust|b_dead&b_mtrust2', hide: 'forkMarfa' },
-          { t: 'Я из Ясноземья — и меня тоже вышвырнули. Помоги.', go: 'kin', hide: 'b_mtrust|b_mtrust2' },
-          { t: 'Где ты была до полуночи?', go: 'where', if: 'b_dead', hide: 'marfaDishes' },
-          { t: 'Обвинить: сборщика убила ты.', go: 'acc', if: 'b_dead' },
+          { t: 'Ты убирала серебро. Всё на месте?', go: 'fork', if: 'k_dead&k_mtrust|k_dead&k_mtrust2', hide: 'forkMarfa' },
+          { t: 'Я из Ясноземья — и меня тоже вышвырнули. Помоги.', go: 'kin', hide: 'k_mtrust|k_mtrust2' },
+          { t: 'Где ты была до полуночи?', go: 'where', if: 'k_dead', hide: 'marfaDishes' },
+          { t: 'Обвинить: сборщика убила ты.', go: 'acc', if: 'k_dead' },
           { t: 'Уйти', exit: true }] },
-        kin: { lines: [['marfa', 'sad', 'Вышвырнули?.. Ну, тогда вы наш. Здесь все такие. Госпожа Маргарет нас подобрала, когда «добрые» вывезли за границу.']], set: ['b_mtrust2'], go: 'menu' },
+        kin: { lines: [['marfa', 'sad', 'Вышвырнули?.. Ну, тогда вы наш. Здесь все такие. Госпожа Маргарет нас подобрала, когда «добрые» вывезли за границу.']], set: ['k_mtrust2'], go: 'menu' },
         fork: { lines: [['marfa', 'worried', 'Не всё. Двузубой вилки нет — с вензелем госпожи. У прибора барона, седьмое место слева. Я ещё подумала: господин вилку унёс, на память, что ли.']], clue: 'forkMarfa', go: 'menu' },
         where: { lines: [['marfa', 'neutral', 'На кухне. Посуду мыла, до самой полуночи, с нашими. Потом понесла господину Мытарю чай — а он там…']], clue: 'marfaDishes', go: 'menu' },
         acc: FALSE('marfa', 'surprised', 'Я?! Ножом? Да я до полуночи посуду мыла — вся кухня видела!'),
@@ -246,17 +246,17 @@
       }
     },
     yan: {
-      start: [['b_solved', 'solved'], ['', 'hub']],
+      start: [['k_solved', 'solved'], ['', 'hub']],
       nodes: {
         hub: { lines: [['yan', 'smile', 'Сверху видно всё: кто с кем танцует, кто кому врёт и кто куда выходит. Скрипка не мешает смотреть.']], go: 'menu' },
         menu: { lines: [], choices: [
-          { t: 'Кто выходил из зала около полуночи?', go: 'saw', if: 'b_dead', hide: 'yanSaw' },
-          { t: 'Где была графиня, пока убивали?', go: 'marg', if: 'b_dead', hide: 'margDance' },
-          { t: 'Сыграй что-нибудь грустное.', go: 'play', hide: 'b_yplay' },
+          { t: 'Кто выходил из зала около полуночи?', go: 'saw', if: 'k_dead', hide: 'yanSaw' },
+          { t: 'Где была графиня, пока убивали?', go: 'marg', if: 'k_dead', hide: 'margDance' },
+          { t: 'Сыграй что-нибудь грустное.', go: 'play', hide: 'k_yplay' },
           { t: 'Уйти', exit: true }] },
         saw: { lines: [['yan', 'neutral', 'Барон. Без десяти полночь вышел из библиотеки — и прямиком в оранжерею. Вернулся быстро, весь какой-то белый. Я даже сбился с такта.']], clue: 'yanSaw', go: 'menu' },
         marg: { lines: [['yan', 'smile', 'Танцевала. С половины двенадцатого до десяти минут первого — у всех на глазах. Я с неё глаз не сводил. Профессиональное.']], clue: 'margDance', go: 'menu' },
-        play: { lines: [[null, null, 'Ян играет медленный вальс. Свечи будто горят тише. Графиня в зале на миг останавливается и закрывает глаза.']], set: ['b_yplay'], go: 'menu' },
+        play: { lines: [[null, null, 'Ян играет медленный вальс. Свечи будто горят тише. Графиня в зале на миг останавливается и закрывает глаза.']], set: ['k_yplay'], go: 'menu' },
         solved: { lines: [['yan', 'smile', 'Последний вальс — за вами.']], end: true }
       }
     }
@@ -264,11 +264,11 @@
 
   // ---------- осмотр ----------
   Object.assign(S.inspect, {
-    bodyB: { label: 'тело на ковре', if: 'b_dead&!notBloodless', lines: [], go: 'ballBody' },
+    bodyB: { label: 'тело на ковре', if: 'k_dead&!notBloodless', lines: [], go: 'ballBody' },
     fireplace: { label: 'камин в библиотеке', lines: [], go: 'ballFire' },
     palmTub: { label: 'кадка с пальмой', lines: [], go: 'ballTub' },
     seating: { label: 'план рассадки', if: '!seatPlan', lines: [], go: 'ballSeat' },
-    karrGuest: { label: 'послать Карра к двери Светозаровых', if: 'hero:miron&!karrBaron&b_dead', heroOnly: true, lines: [], heroLines: { miron: [
+    karrGuest: { label: 'послать Карра к двери Светозаровых', if: 'hero:miron&!karrBaron&k_dead', heroOnly: true, lines: [], heroLines: { miron: [
       ['det', null, 'Карр, к той двери. Посиди на карнизе, послушай.'],
       [null, null, 'Ворон исчезает в полутьме коридора. Через минуту возвращается и хрипит двумя голосами:'],
       [null, null, '«Ты с ума сошёл, Ар-ристарх! — Тише! Книги больше нет. Нет книги — нет долга. Кар-р!»']] }, buff: { miron: 'Карр подслушивает' }, clue: 'karrBaron', time: 10 },

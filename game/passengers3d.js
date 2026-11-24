@@ -305,7 +305,7 @@
     if (window.WORLD && WORLD.LOC) for (const k in WORLD.LOC) if (k !== cur && WORLD.LOC[k].group) away.add(WORLD.LOC[k].group);
     if (cur !== 'train' && window.TRAIN_ROOT) away.add(TRAIN_ROOT);
     (function walk(o) { if (away.has(o) || o.isLight) return; if (!o.visible) { o.visible = true; flip.push(o); } o.children.forEach(walk); })(scene);
-    try { renderer.compile(scene, camera); } catch (e) { console.warn(e); }
+    try { if (window.compileScene) compileScene(); else renderer.compile(scene, camera); } catch (e) { console.warn(e); }
     flip.forEach(o => { o.visible = false; });
     hidden.forEach(st => showHolder(st, false));
   }

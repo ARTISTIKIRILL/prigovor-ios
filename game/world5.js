@@ -243,7 +243,7 @@
       L.zones = [[X(-19), X(-8), 'Гостевое крыло', 0], [X(-8), X(8), 'Замок Чернолесье', 0], [X(8), X(19), 'Оранжерея', 0]];
     },
     enter(L) {
-      if (!S.f.b_started) { S.f.b_started = true; S.time = -120; resetBall(L); startPos(); setTimeout(() => startScene('ballIntro'), 500); }
+      if (!S.f.k_started) { S.f.k_started = true; S.time = -120; resetBall(L); startPos(); setTimeout(() => startScene('ballIntro'), 500); }
       else startPos();
     },
     tick(L, dt) {
@@ -253,28 +253,28 @@
       L.fireB.material.emissiveIntensity = 2 + Math.sin(t * 8) * .5; L.fireL.material.emissiveIntensity = 2 + Math.sin(t * 7 + 1) * .5; L.fireK.material.emissiveIntensity = 1.8 + Math.sin(t * 9) * .4;
       
       // вальс: пары медленно кружат на месте
-      const waltz = !f.b_dead || f.b_solved;
+      const waltz = !f.k_dead || f.k_solved;
       L.dancers.forEach((n, i) => { if (!waltz) return; const a = t * .9 + n.ph, r = .4, s = i % 2 ? 1 : -1; const x = n.cx + Math.cos(a) * r * s, z = n.cz + Math.sin(a) * r * s; n.st.root.position.x = x; n.st.root.position.z = z; n.st.root.rotation.y = -a + (s > 0 ? Math.PI : 0) + Math.PI / 2; });
-      if (f.b_solved) return;
+      if (f.k_solved) return;
       if (!busy) S.time += dt / 3;
       const tm = S.time, np = L.np, R = (a, b) => tm >= a && tm < b;
-      if (tm >= 10 && !f.b_dead && !busy) startScene('ballMurder');
+      if (tm >= 10 && !f.k_dead && !busy) startScene('ballMurder');
       // кто где
       const dance = R(-30, 10);
-      np.margaret.hidden = dance || !!f.b_guard; np.margaretD.hidden = !dance; np.margaretG.hidden = !f.b_guard;
-      L.guards.forEach(g => { g.hidden = !f.b_guard; });
+      np.margaret.hidden = dance || !!f.k_guard; np.margaretD.hidden = !dance; np.margaretG.hidden = !f.k_guard;
+      L.guards.forEach(g => { g.hidden = !f.k_guard; });
       np.svetozarov.hidden = R(-45, -6); np.svetozarovL.hidden = !R(-45, -18); np.svetozarovO.hidden = !R(-12, -6);
       np.mytar.hidden = tm >= -20; L.mytarBody.root.visible = tm >= -20; L.blood.visible = tm >= -20; L.ledger.visible = tm < -20; L.page.visible = tm >= -20 && !f.pageDebt;
       L.gloves.visible = tm >= -10 && !f.gloveBlood;
       np.irina.hidden = tm >= 30; np.irinaR.hidden = tm < 30;
-      np.sedoy.hidden = !!f.b_dead; np.sedoyH.hidden = !f.b_dead;
-      if (tm >= 300 && !f.b_solved && !busy) startScene('ballDawn');
+      np.sedoy.hidden = !!f.k_dead; np.sedoyH.hidden = !f.k_dead;
+      if (tm >= 300 && !f.k_solved && !busy) startScene('ballDawn');
     }
   };
   function startPos() { place(CX + 4.8, -5.0, Math.PI, 0); }
   function resetBall(L) {
-    for (const k in S.f) if (k.startsWith('b_') && !['b_solved', 'b_started', 'b_wrong'].includes(k)) delete S.f[k];
-    S.f.b_started = true;
+    for (const k in S.f) if (k.startsWith('k_') && !['k_solved', 'k_started', 'k_wrong'].includes(k)) delete S.f[k];
+    S.f.k_started = true;
     NPCS.forEach(n => { if (n.loc === 'ball') delete S.f['met_' + n.id]; });
     derive();
   }
@@ -287,7 +287,7 @@
     const notVamp = f.notBloodless || f.palataLieB || f.margBlood || f.woundsMetal;
     const glove = f.gloveBlood || f.margGlove || f.gloveSwap;
     const how = f.forkMarfa || f.seatPlan || f.pageDebt || f.irinaDebt || f.karrBaron;
-    f.b_ready = !!(notVamp && glove && how && f.b_dead);
+    f.k_ready = !!(notVamp && glove && how && f.k_dead);
     if (!f.palataLieB && f.notBloodless && STORY.clues.palataLieB) setTimeout(() => { if (!S.f.palataLieB) { addClue('palataLieB'); toastMsg = 'Ложь Палаты: досье врёт. Улика-опровержение — в блокноте.'; toastT = 4; } }, 900);
   };
 
@@ -336,11 +336,11 @@
   const fin0 = window.finishLocation;
   window.finishLocation = function () {
     if (WORLD.cur !== 'ball') return fin0 && fin0();
-    if (S.f.b_solved) { toastMsg = 'Здесь нечего завершать.'; toastT = 2.5; return; }
+    if (S.f.k_solved) { toastMsg = 'Здесь нечего завершать.'; toastT = 2.5; return; }
     if (D.on) closeDialog();
     ['notBloodless', 'palataLieB', 'gloveBlood', 'yanSaw', 'forkMarfa', 'pageDebt', 'margDance', 'lilyConvoy'].forEach(id => { S.f[id] = true; if (!S.clues.includes(id)) S.clues.push(id); });
     if (S.time < 40) S.time = 40;
-    S.f.b_dead = true; derive(); updateQuest();
+    S.f.k_dead = true; derive(); updateQuest();
     const L = LOC.ball; L.tick(L, 0);
     const sv = L.np.svetozarov; place(sv.x + 1.1, sv.z, Math.PI / 2, 0);
     P.yaw = Math.atan2(-(sv.x - P.x), -(sv.z - P.z));

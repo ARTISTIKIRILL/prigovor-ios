@@ -41,7 +41,7 @@
   const AGENTS = ['remez', 'lykov', 'iov', 'tkach', 'lukash', 'herald', 'sedoy'];
   const CASES = ['train', 'boat', 'monast', 'polar', 'ball', 'fort', 'noon'];
   const RB = { train: 'rollback', boat: 'boatRollback', monast: 'monRollback', polar: 'polRollback', ball: 'ballRollback', fort: 'fortRollback', noon: 'noonRollback' };
-  const actsDone = () => ['act1done', 'act2done', 'act3done', 'b_solved', 'act4done'].filter(k => S.f[k]).length;
+  const actsDone = () => ['act1done', 'act2done', 'act3done', 'k_solved', 'act4done'].filter(k => S.f[k]).length;
 
   // ---------- вычисляемые флаги ----------
   const d0 = window.deriveLoc;
