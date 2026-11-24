@@ -5,7 +5,11 @@
   const base = window.portraitSVG;
   if (!base) return;
   let n = 0;
+  // герои — гравюра по их 3D-моделям (por_eng.js); картинка ложится ровно в видимое окно медальона (см. CSS-зум #portrait)
+  const ENGID = { margaretP: 'margaret', margaretN: 'margaret' };
   window.portraitSVG = function (id, expr) {
+    const eg = window.ENGPOR && !/[?&]oldpor/.test(location.search) && ENGPOR[ENGID[id] || id];
+    if (eg) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 640" data-eng="1"><image href="${eg}" x="104.5" y="94.5" width="291" height="352.5" preserveAspectRatio="xMidYMid slice"/></svg>`;
     const s = window.NOIR && NOIR.has(id) ? NOIR.svg(id, expr) : base(id, expr);   // нуар-стиль — для всех, включая героев
     if (!s || s.indexOf('</svg>') < 0) return s;
     const u = 'pfx' + (n++);
