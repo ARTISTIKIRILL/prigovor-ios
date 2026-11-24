@@ -3,6 +3,7 @@
 <head>
 <script src="../gfx.js"></script>
 <meta charset="utf-8">
+<script src="../power.js?v=1"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Катсцена «Приговор»</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=PT+Sans:wght@400;700&display=swap">
@@ -97,6 +98,8 @@ import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+import {ShaderPass} from 'three/addons/postprocessing/ShaderPass.js';
+import {FXAAShader} from 'three/addons/shaders/FXAAShader.js';
 
 let DEBUG=false;
 const PITCH_SIGN=1;
@@ -149,17 +152,21 @@ function applyLang(){
 
 /* ================= renderer ================= */
 const canvas=$('#c');
-const r=new THREE.WebGLRenderer({canvas,antialias:!!(window.GFX?GFX.aa:true),powerPreference:'high-performance'});
+const r=new THREE.WebGLRenderer({canvas,antialias:false});
 r.setPixelRatio((window.GFX?GFX.pr:(v=>v))(Math.min(devicePixelRatio,Math.min(innerWidth,innerHeight)<600?1.25:1.5)));
+// не больше ~2.3 млн точек на кадр (большой Retina-экран во весь экран — 4+ млн)
+r.setPixelRatio(Math.max(.5,Math.min(r.getPixelRatio(),Math.sqrt(2.3e6/Math.max(1,innerWidth*innerHeight)))));
 r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.0;
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x000000);
 const cam=new THREE.PerspectiveCamera(35,16/9,0.03,220);
 const pm=new THREE.PMREMGenerator(r);scene.environment=pm.fromScene(new RoomEnvironment(),0.04).texture;
 const composer=new EffectComposer(r);composer.addPass(new RenderPass(scene,cam));
-const bloom=new UnrealBloomPass(new THREE.Vector2(512,512),0.7,0.55,0.85);composer.addPass(bloom);composer.addPass(new OutputPass());
+const bloom=new UnrealBloomPass(new THREE.Vector2(512,512),0.7,0.55,0.85);{const bs=bloom.setSize.bind(bloom);bloom.setSize=(w,h)=>bs(Math.max(2,w/2),Math.max(2,h/2));}composer.addPass(bloom);composer.addPass(new OutputPass());
+// края сглаживает FXAA после вывода в sRGB (MSAA холста при композере не работает)
+const fxaa=new ShaderPass(FXAAShader);if(!window.GFX||GFX.aa)composer.addPass(fxaa);
 let baseFov=35;
 function applyFov(){const a=cam.aspect,ref=16/9;let f=baseFov;if(a<ref){const h=2*Math.atan(Math.tan(baseFov*Math.PI/360)*ref);f=2*Math.atan(Math.tan(h/2)/a)*180/Math.PI;f=Math.min(f,78);}cam.fov=f;cam.updateProjectionMatrix();}
-function resize(){const w=innerWidth,h=innerHeight;r.setSize(w,h,false);composer.setSize(w,h);cam.aspect=w/h;applyFov();}
+function resize(){const w=innerWidth,h=innerHeight;r.setSize(w,h,false);composer.setSize(w,h);{const pr=r.getPixelRatio();fxaa.material.uniforms.resolution.value.set(1/(w*pr),1/(h*pr));}cam.aspect=w/h;applyFov();}
 addEventListener('resize',resize);resize();
 
 /* ================= textures ================= */

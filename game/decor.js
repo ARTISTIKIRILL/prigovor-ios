@@ -139,7 +139,41 @@
     for (const x of [1, 11]) { const p = cyl(G, .07, .07, 12, mat.brass, X(x), y + 2.05, -6.2, 10); p.rotation.x = Math.PI / 2; }
   }
 
-  const ADD = { monast, ball, noon };
+
+  // ---------- пароход: каюты средней палубы ----------
+  // каюты 3.5×2.35 вдоль бортов (x = BX+cx … +3.5, z 0.75…3.07), койка у борта, столик у входа.
+  // Добавляем: иллюминатор над койкой, картину на переборке, коврик, вешалку с пальто у двери.
+  const BX = 600;
+  const seaM = M('#10203a', { e: '#30507a', ei: .35, r: .1, m: .3 });
+  const coatC = ['#2a2420', '#3a3020', '#1e2430', '#40281e'].map(c => M(c, { r: 1, side: 2 }));
+  const seaPic = (seed) => { const t = canvasTex(128, 96, (g, w, h) => {
+    const sky = g.createLinearGradient(0, 0, 0, h * .6); sky.addColorStop(0, ['#6a7a90', '#c89a60', '#8a9aa8', '#5a6a80'][seed % 4]); sky.addColorStop(1, '#d8c8a0'); g.fillStyle = sky; g.fillRect(0, 0, w, h * .6);
+    g.fillStyle = '#2a4a5a'; g.fillRect(0, h * .6, w, h * .4); g.fillStyle = '#3a6070'; for (let i = 0; i < 9; i++) g.fillRect(rnd(0, w), rnd(h * .62, h), rnd(8, 20), 2);
+    g.fillStyle = '#1a1a1a'; g.fillRect(w * .3 + seed * 6, h * .5, w * .32, h * .08); g.fillRect(w * .42 + seed * 6, h * .36, w * .05, h * .15); g.fillStyle = '#e8e0d0'; g.fillRect(w * .34 + seed * 6, h * .46, w * .22, h * .05); });
+    return M('#ffffff', { map: t, r: .7 }); };
+  function boat(L, G) {
+    const y0 = 0, cabX = [-7, -3.5, 0, 3.5];
+    cabX.forEach((cx, i) => [-1, 1].forEach(sz => {
+      const x0 = BX + cx, mid = x0 + 1.75;
+      // иллюминатор: латунное кольцо, стекло с ночной рекой
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(.17, .035, 8, 20), mat.brass); ring.position.set(mid + .3, y0 + 1.45, sz * 3.05); G.add(ring);
+      const gl = new THREE.Mesh(new THREE.CircleGeometry(.16, 18), seaM); gl.position.set(mid + .3, y0 + 1.45, sz * 3.06); gl.rotation.y = sz > 0 ? Math.PI : 0; G.add(gl);
+      for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; cyl(G, .012, .012, .02, mat.brass, mid + .3 + Math.cos(a) * .22, y0 + 1.45 + Math.sin(a) * .22, sz * 3.05, 6).rotation.x = Math.PI / 2; }
+      // картина на поперечной переборке (у дальней от входа стены каюты)
+      const wx = x0 + 3.47; frame(G, wx, y0 + 1.5, sz * 1.95, -Math.PI / 2, .5, .38, seaPic(i * 2 + (sz > 0 ? 1 : 0)));
+      // коврик между койкой и дверью
+      box(G, 1.3, .008, .62, rug, mid, y0 + .006, sz * 1.62);
+      // вешалка с пальто у двери (на стене коридора, изнутри каюты)
+      box(G, .5, .05, .04, mat.woodD, x0 + .65, y0 + 1.7, sz * .79);
+      for (const dx of [-.15, .15]) cyl(G, .012, .012, .08, mat.brass, x0 + .65 + dx, y0 + 1.7, sz * .83, 6).rotation.x = Math.PI / 2;
+      const coat = new THREE.Mesh(new THREE.CylinderGeometry(.1, .2, .95, 10, 1, true), coatC[(i + (sz > 0 ? 2 : 0)) % 4]); coat.position.set(x0 + .5, y0 + 1.2, sz * .9); coat.scale.z = .55; G.add(coat);
+      // книга и стакан на столике
+      book(G, x0 + .4, y0 + .72, sz * 2.7, .3, i + 3);
+      cyl(G, .03, .025, .09, M('#c8d8e0', { r: .1, m: .1, op: .6 }), x0 + .58, y0 + .765, sz * 2.85, 10);
+    }));
+  }
+
+  const ADD = { monast, ball, noon, boat };
   for (const id in ADD) {
     const Lc = LOC[id]; if (!Lc || !Lc.build) continue;
     const b0 = Lc.build;

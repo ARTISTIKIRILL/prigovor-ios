@@ -246,7 +246,8 @@
   let last = performance.now();
   (function loop(t) {
     const dt = Math.min(.05, (t - last) / 1000); last = t;
-    for (const mx of MIXERS) mx.update(dt);
+    // спрятанных (другая локация, не в кадре сюжета) не анимируем — к финалу их десятки
+    for (const mx of MIXERS) { let o = mx.getRoot(), v = true; for (; o; o = o.parent) if (!o.visible) { v = false; break; } if (v) mx.update(dt); }
     requestAnimationFrame(loop);
   })(last);
 

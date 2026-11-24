@@ -16,12 +16,14 @@
   g.pr = function (base) { return Math.max(0.5, base * g.scale); };
   window.GFX = g;
 
-  // ограничение кадров: 30 к/с экономит батарею на слабых телефонах
-  if (g.fps && g.fps < 60) {
-    var raf = window.requestAnimationFrame.bind(window), step = 1000 / g.fps, last = 0;
+  // ограничение кадров (GFX.fps) делает power.js — он же сбавляет кадры в диалогах, без фокуса и под прологом.
+  // Если power.js почему-то нет — простой предел здесь.
+  if (!window.POWER && g.fps) {
+    var raf = window.requestAnimationFrame.bind(window), step = 1000 / g.fps, last = 0, adm = -1, skp = -1;
     window.requestAnimationFrame = function (cb) {
       return raf(function loop(t) {
-        if (t - last >= step - 2) { last = t; cb(t); } else raf(loop);
+        if (t !== adm) { if (t === skp || t - last < step * 0.8) { skp = t; raf(loop); return; } adm = t; last = t; }
+        cb(t);
       });
     };
   }
@@ -31,7 +33,8 @@
     if (!window.THREE || !THREE.WebGLRenderer || THREE.WebGLRenderer.__gfx) return false;
     var R = THREE.WebGLRenderer;
     var W = function (o) {
-      o = Object.assign({}, o || {}, { antialias: !!g.aa });
+      // при свечении кадр идёт через постобработку: сглаживание холста там бесполезно, края сглаживает FXAA
+      o = Object.assign({}, o || {}, { antialias: !!g.aa && g.bloom === false });
       var r = new R(o);
       var sp = r.setPixelRatio.bind(r);
       r.setPixelRatio = function (v) { sp(g.pr(v)); };
