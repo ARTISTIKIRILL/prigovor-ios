@@ -6,7 +6,7 @@
   if (!base) return;
   let n = 0;
   window.portraitSVG = function (id, expr) {
-    const s = base(id, expr);
+    const s = window.NOIR && NOIR.has(id) ? NOIR.svg(id, expr) : base(id, expr);   // нуар-стиль — для всех, включая героев
     if (!s || s.indexOf('</svg>') < 0) return s;
     const u = 'pfx' + (n++);
     const defs = `<defs><linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset=".74" stop-color="#fff"/><stop offset=".98" stop-color="#fff" stop-opacity="0"/></linearGradient>` +
