@@ -307,4 +307,5 @@
     return s + `</svg>`;
   };
   window.PORTRAIT_IDS = Object.keys(C);
+  window.__POR = { C, sh, faceShape, hairBack, hairFront, beard, hat, body };   // для нуар-портретов (portraits_noir.js)
 })();
