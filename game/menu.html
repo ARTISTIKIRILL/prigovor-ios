@@ -64,7 +64,7 @@
     <div class="row"><label>Качество<small>Готовый набор настроек</small></label><div class="seg" id="q"></div></div>
     <div class="row"><label>Чёткость <span id="scaleV"></span><small>Меньше — плавнее на слабом телефоне</small></label><input type="range" id="scale" min="0.5" max="1.35" step="0.05"></div>
     <div class="row"><label>Сглаживание<small>Убирает «лесенку» на краях</small></label><button class="sw" id="aa" aria-label="Сглаживание"></button></div>
-    <div class="row"><label>Свечение<small>Мягкий ореол света в прологе</small></label><button class="sw" id="bloom" aria-label="Свечение"></button></div>
+    <div class="row"><label>Свечение<small>Мягкий ореол света. На телефоне сильно тормозит</small></label><button class="sw" id="bloom" aria-label="Свечение"></button></div>
     <div class="row"><label>Пыль в воздухе<small>Пылинки в лучах света</small></label><button class="sw" id="dustSw" aria-label="Пыль в воздухе"></button></div>
     <div class="row"><label>Частота кадров<small>30 экономит батарею</small></label><div class="seg" id="fps"></div></div>
     <div class="actions"><button class="btn primary" id="done">Готово</button></div>
@@ -80,7 +80,7 @@ const G = window.GFX, P = G.PRESETS;
 const QN = { low:'Низкая', medium:'Средняя', high:'Высокая', ultra:'Ультра', custom:'Своя' };
 function save() {
   G.q = detect();
-  const o = { q:G.q, scale:G.scale, aa:G.aa, bloom:G.bloom, dust:G.dust, fps:G.fps, people:G.people };
+  const o = { q:G.q, scale:G.scale, aa:G.aa, bloom:G.bloom, dust:G.dust, fps:G.fps, people:G.people, v:2 };
   try { localStorage.setItem('prigovor_gfx', JSON.stringify(o)); } catch (e) {}
 }
 function detect() {

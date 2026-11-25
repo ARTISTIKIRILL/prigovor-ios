@@ -4,13 +4,20 @@
   var DEF = { q: 'high', scale: 1, aa: true, bloom: true, dust: true, fps: 60, people: true };
   var PRESETS = {
     low:    { scale: 0.6,  aa: false, bloom: false, dust: false, fps: 30, people: false },
-    medium: { scale: 0.8,  aa: false, bloom: true,  dust: true,  fps: 60, people: true },
+    medium: { scale: 0.75, aa: true,  bloom: false, dust: false, fps: 60, people: true },
     high:   { scale: 1.0,  aa: true,  bloom: true,  dust: true,  fps: 60, people: true },
     ultra:  { scale: 1.35, aa: true,  bloom: true,  dust: true,  fps: 0, people: true }
   };
   var g = {};
   try { g = JSON.parse(localStorage.getItem('prigovor_gfx') || '{}') || {}; } catch (e) { g = {}; }
   for (var k in DEF) if (!(k in g)) g[k] = DEF[k];
+  // v2: на телефоне «Средняя» стала легче (без свечения и пыли) — старую сохранённую «Среднюю» переводим на новую
+  if (g.v !== 2) {
+    var phone = /Android|iPhone|iPad/i.test(navigator.userAgent);
+    if (phone && g.scale === 0.8 && g.bloom === true && g.aa === false) { g.scale = 0.75; g.aa = true; g.bloom = false; g.dust = false; g.q = 'medium'; }
+    g.v = 2;
+    try { localStorage.setItem('prigovor_gfx', JSON.stringify({ q: g.q, scale: g.scale, aa: g.aa, bloom: g.bloom, dust: g.dust, fps: g.fps, people: g.people, v: 2 })); } catch (e) { }
+  }
   g.PRESETS = PRESETS;
   // множитель чёткости: применяется к devicePixelRatio, который выбирает игра
   g.pr = function (base) { return Math.max(0.5, base * g.scale); };

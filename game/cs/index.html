@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="ru">
 <head>
+<script src="../gfx.js"></script>
 <meta charset="utf-8">
 <script src="../power.js?v=1"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -152,7 +153,7 @@ function applyLang(){
 /* ================= renderer ================= */
 const canvas=$('#c');
 const r=new THREE.WebGLRenderer({canvas,antialias:false});
-r.setPixelRatio(Math.min(devicePixelRatio,Math.min(innerWidth,innerHeight)<600?1.0:1.5));
+r.setPixelRatio((window.GFX?GFX.pr:(v=>v))(Math.min(devicePixelRatio,Math.min(innerWidth,innerHeight)<600?1.25:1.5)));
 // не больше ~2.3 млн точек на кадр (большой Retina-экран во весь экран — 4+ млн)
 r.setPixelRatio(Math.max(.5,Math.min(r.getPixelRatio(),Math.sqrt(2.3e6/Math.max(1,innerWidth*innerHeight)))));
 r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.0;
@@ -162,7 +163,7 @@ const pm=new THREE.PMREMGenerator(r);scene.environment=pm.fromScene(new RoomEnvi
 const composer=new EffectComposer(r);composer.addPass(new RenderPass(scene,cam));
 const bloom=new UnrealBloomPass(new THREE.Vector2(512,512),0.7,0.55,0.85);{const bs=bloom.setSize.bind(bloom);bloom.setSize=(w,h)=>bs(Math.max(2,w/2),Math.max(2,h/2));}composer.addPass(bloom);composer.addPass(new OutputPass());
 // края сглаживает FXAA после вывода в sRGB (MSAA холста при композере не работает)
-const fxaa=new ShaderPass(FXAAShader);composer.addPass(fxaa);
+const fxaa=new ShaderPass(FXAAShader);if(!window.GFX||GFX.aa)composer.addPass(fxaa);
 let baseFov=35;
 function applyFov(){const a=cam.aspect,ref=16/9;let f=baseFov;if(a<ref){const h=2*Math.atan(Math.tan(baseFov*Math.PI/360)*ref);f=2*Math.atan(Math.tan(h/2)/a)*180/Math.PI;f=Math.min(f,78);}cam.fov=f;cam.updateProjectionMatrix();}
 function resize(){const w=innerWidth,h=innerHeight;r.setSize(w,h,false);composer.setSize(w,h);{const pr=r.getPixelRatio();fxaa.material.uniforms.resolution.value.set(1/(w*pr),1/(h*pr));}cam.aspect=w/h;applyFov();}
@@ -273,7 +274,7 @@ function buildHall(){
  door(-9.93,0,2.0,3.2);door(4.9,8.65,1.8,3.0);door(-6.35,7.45,1.5,2.7);
  const mos=new THREE.Mesh(new THREE.CircleGeometry(2.45,64),new THREE.MeshStandardMaterial({map:lilyTex(1024,{fill:'rgba(0,0,0,0)',stroke:'#c9a246',lw:9,eyeWhite:'rgba(255,248,230,.6)',iris:'#8a6a2a'}),transparent:true,roughness:.3,metalness:.6,depthWrite:false}));mos.rotation.set(-Math.PI/2,0,Math.PI);mos.position.y=.006;g.add(mos);
  {const n=320,geo=new THREE.BufferGeometry(),a=new Float32Array(n*3);for(let i=0;i<n;i++){a[i*3]=rnd(-5,5);a[i*3+1]=rnd(.2,8);a[i*3+2]=rnd(-5,4);}geo.setAttribute('position',new THREE.BufferAttribute(a,3));
-  hallDust=new THREE.Points(geo,new THREE.PointsMaterial({map:TX.glow,size:.045,color:0xfff2d0,transparent:true,opacity:.55,blending:THREE.AdditiveBlending,depthWrite:false}));g.add(hallDust);}
+  hallDust=new THREE.Points(geo,new THREE.PointsMaterial({map:TX.glow,size:.045,color:0xfff2d0,transparent:true,opacity:.55,blending:THREE.AdditiveBlending,depthWrite:false}));g.add(hallDust);if(window.GFX&&!GFX.dust)hallDust.visible=false;}
  hallEm=em;
  const L=lightSet(g,0xffffff,0xd9d2c6,.8,0xfff0da,1.8,V(-6,14,-4),0xffffff,0,10);
  LOC.hall={g,L,bg:0xf3f0ea,fog:null,bloom:[.45,.35,.97],exp:1.0};
@@ -840,7 +841,7 @@ function frame(){const dt=Math.min(clock.getDelta(),.1); // до 10 кадров
  if(subState.ru&&now()>subState.until)hideSub();
  cam.position.copy(camP);if(S.shake>.001){cam.position.x+=(Math.random()-.5)*S.shake;cam.position.y+=(Math.random()-.5)*S.shake;S.shake*=Math.exp(-dt*5);}cam.lookAt(camT);placeLabels();
  // пока герои грузятся, кадр закрыт заставкой или темнотой: не рисуем, иначе каждый новый герой тут же собирает шейдеры и замораживает телефон
- if(loadedOK)composer.render();requestAnimationFrame(frame);}
+ if(loadedOK)((window.GFX&&!GFX.bloom)?r.render(scene,cam):composer.render());requestAnimationFrame(frame);}
 let started=false;
 
 /* ================= debug ================= */
