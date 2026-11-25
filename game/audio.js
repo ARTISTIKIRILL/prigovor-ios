@@ -1,4 +1,5 @@
-// Звук без файлов: всё синтезируется WebAudio. Гул и стук колёс в поезде, короткие эффекты, кнопка выключения.
+// Звук: короткие эффекты и шаги — записи из пакетов Kenney (CC0, файлы snd/*.mp3), фоновый гул — синтез WebAudio.
+// Пока записи не загрузились (или файла нет) — играет прежний синтезированный вариант. Кнопка выключения.
 (function () {
   let ctx = null, master = null, amb = null, muted = false;
   try { muted = localStorage.getItem('train_mute') === '1'; } catch (e) {}
@@ -63,7 +64,40 @@
     bell: () => { tone(740, 1.4, 'sine', .08); tone(1110, 1.0, 'sine', .04); },
     win: () => [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(f, .35, 'triangle', .1), i * 110))
   };
-  window.SFX = { play(n) { try { if (FX[n]) FX[n](); } catch (e) {} } };
+  // ---------- записи ----------
+  const SMP = {}, SMP_LIST = ['blip', 'chime', 'lily', 'alarm', 'hit', 'miss', 'card', 'card2', 'click', 'unlock', 'unlock2', 'door', 'door2', 'buff', 'bell', 'win', 'clack'];
+  ['wood', 'carpet', 'concrete', 'snow'].forEach(s => { for (let i = 0; i < 5; i++) SMP_LIST.push('step_' + s + i); });
+  let smpLoading = false;
+  function loadSamples() {
+    if (smpLoading || !ctx) return; smpLoading = true;
+    SMP_LIST.forEach(n => fetch('snd/' + n + '.mp3').then(r => r.ok ? r.arrayBuffer() : Promise.reject()).then(b => new Promise((res, rej) => ctx.decodeAudioData(b, res, rej))).then(buf => { SMP[n] = buf; }).catch(() => { }));
+  }
+  function smp(n, vol, rate, when, lp) {
+    if (!ctx || muted || !SMP[n]) return false;
+    const s = ctx.createBufferSource(); s.buffer = SMP[n]; s.playbackRate.value = rate || 1;
+    const g = ctx.createGain(); g.gain.value = vol == null ? .5 : vol;
+    if (lp) { const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; s.connect(f); f.connect(g); } else s.connect(g);
+    g.connect(master); s.start(when || 0); return true;
+  }
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  // эффект → запись (если не загрузилась — синтез из FX)
+  const REC = {
+    blip: () => smp('blip', .18, rnd(.95, 1.05)),
+    chime: () => smp('chime', .55),
+    lily: () => smp('lily', .6, .9),
+    alarm: () => smp('alarm', .5),
+    hit: () => smp('hit', .8, rnd(.9, 1.1)),
+    miss: () => smp('miss', .7, rnd(.9, 1.05)),
+    card: () => smp(Math.random() < .5 ? 'card' : 'card2', .7, rnd(.95, 1.08)),
+    click: () => smp('click', .4),
+    unlock: () => smp('unlock', .7) && (setTimeout(() => smp('unlock2', .5), 120), true),
+    door: () => smp(Math.random() < .5 ? 'door' : 'door2', .6, rnd(.95, 1.05)),
+    buff: () => smp('buff', .5),
+    bell: () => smp('bell', .35, .8, 0, 3500),
+    horn: () => smp('bell', .22, .55, 0, 1600),    // вокзал: далёкий станционный колокол вместо синтезированного гудка
+    win: () => smp('win', .6)
+  };
+  window.SFX = { play(n) { try { if (!(REC[n] && REC[n]())) { if (FX[n]) FX[n](); } } catch (e) {} } };
   function setMute(m) {
     muted = m; draw();
     try { localStorage.setItem('train_mute', m ? '1' : '0'); } catch (e) {}
@@ -72,7 +106,7 @@
   btn.addEventListener('pointerdown', e => e.stopPropagation());
   btn.addEventListener('click', e => { e.stopPropagation(); init(); setMute(!muted); });
   document.addEventListener('keydown', e => { if (e.code === 'KeyM') { init(); setMute(!muted); } }, true);
-  const wake = () => { init(); if (ctx && ctx.state === 'suspended') ctx.resume(); };
+  const wake = () => { init(); loadSamples(); if (ctx && ctx.state === 'suspended') ctx.resume(); };
   ['pointerdown', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, wake, { passive: true }));
   // фон: гул поезда и «ту-дук» колёс, пока идёт игра в вагонах
   (function loop() {
@@ -87,9 +121,34 @@
     if (playing && !inTrain && !muted) { amb.ev = (amb.ev || ctx.currentTime + 6); if (ctx.currentTime > amb.ev) { (loc === 'boat' ? FX.bell : FX.horn)(); amb.ev = ctx.currentTime + 25 + Math.random() * 20; } }
     if (inTrain && ctx.currentTime > amb.next - .1) {
       const t = Math.max(ctx.currentTime, amb.next);
-      clack(t, .09); clack(t + .14, .06);
+      // «ту-дук»: запись удара металла, приглушённая и пониженная; без записи — синтез
+      if (!(SMP.clack && !muted && smp('clack', .16, .5, t, 700) && smp('clack', .11, .46, t + .14, 650))) { clack(t, .09); clack(t + .14, .06); }
       amb.next = t + 1.05 + Math.random() * .1;
     }
+    steps(playing);
   })();
+  // ---------- шаги: покрытие по месту, чаще на бегу, тише вприсядку ----------
+  let lpx = null, lpz = null, stepAcc = 0, stepI = 0;
+  function surface() {
+    const loc = window.WORLD ? WORLD.cur : 'train', lv = (typeof P !== 'undefined' && P.lv) || 0;
+    if (loc === 'train') return 'carpet';
+    if (loc === 'boat') return lv === 0 ? 'carpet' : 'wood';
+    if (loc === 'monast' || loc === 'polar') return lv < 0 ? 'concrete' : 'snow';
+    if (loc === 'ball') return 'wood';
+    return 'concrete';
+  }
+  function steps(playing) {
+    if (typeof P === 'undefined') return;
+    if (lpx === null) { lpx = P.x; lpz = P.z; return; }
+    const d = Math.hypot(P.x - lpx, P.z - lpz); lpx = P.x; lpz = P.z;
+    const talking = typeof D !== 'undefined' && D.on;
+    if (!playing || talking || d > 1.5 || muted) { stepAcc = 0; return; }   // телепорт/переход — не шаг
+    stepAcc += d;
+    const stride = (typeof crouch !== 'undefined' && crouch) ? .55 : .72;
+    if (stepAcc >= stride) {
+      stepAcc = 0; const sf = surface();
+      smp('step_' + sf + (stepI = (stepI + 1 + Math.floor(Math.random() * 3)) % 5), (typeof crouch !== 'undefined' && crouch) ? .12 : (sf === 'snow' ? .3 : .22), rnd(.92, 1.06));
+    }
+  }
   draw();
 })();

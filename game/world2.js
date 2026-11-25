@@ -451,7 +451,7 @@
       window.rebuildBench = () => { let k = 0; const four = !L.bench.some(n => n.id === 'b_' + S.hero), x0 = four ? -1.62 : -1.15, dx = four ? 1.08 : 1.15; L.bench.forEach(n => { const me = n.id === 'b_' + S.hero; n.hidden = me; if (!me) { n.x = SX + x0 + (k++) * dx; n.st.root.position.x = n.x; } }); };
       rebuildBench();
       if (window.Heroes3D) Heroes3D.station(L, sm); // 3D-модели героев и Смотрителя
-      [-1.6, -.5, .5, 1.6].forEach(dx => L.blockers.push({ x: SX + dx, z: 6.75 }));
+      [-1.6, -.5, .5, 1.6].forEach(dx => L.blockers.push({ x: SX + dx, z: 6.75 }, { x: SX + dx, z: 6.25, r: .42 })); // второй ряд — колени сидящих: камера не влезает в героев
       // мелькнувшая в тумане Зоя
       L.zoya = addNPC('zoyaG', standAt(SX - 13, 2.2, '+x'), LOOK.zoya, { loc: 'station', name: 'Девушка в фартуке', bark: 'station' });
       worldUV(G); L.merged = mergeStatic(G, L);
@@ -612,7 +612,7 @@
       }
       L.fire = box(G, .05, .5, .7, M('#ff7a2a', { e: '#ff6a1a', ei: 2 }), BX - .53, y + .7, 0);
       L.lamps.push({ p: new THREE.Vector3(BX - 1, y + .8, 0), i: 1.2, d: 5, c: 0xff8a3a });
-      cyl(G, .25, .25, 2.5, iron, BX + 2.5, y + 3.2, 0, 14);
+      cyl(G, .25, .25, .22, iron, BX + 2.5, y + 2.29, 0, 14); // дымоход котла — до потолка кочегарки (раньше пробивал коридор средней палубы)
       for (let i = 0; i < 26; i++) { const r = rnd(.12, .3), c = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), M('#141414', { r: .7, m: .2 })); c.position.set(BX - 3.6 + rnd(-.9, .9), y + r * .6 + rnd(0, .25), 2.3 + rnd(-.6, .6)); c.rotation.set(rnd(0, 3), rnd(0, 3), 0); G.add(c); }
       box(G, .9, .05, .9, iron, BX + 4.2, y + .02, -2.3);
       L.holdDoor = box(G, .06, 2.0, 1.0, M('#4a3a2a', { r: .8 }), BX + 5, y + 1, 0);

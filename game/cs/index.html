@@ -8,6 +8,10 @@
 <title>Катсцена «Приговор»</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=PT+Sans:wght@400;700&display=swap">
 <style>
+/* текст пролога не выделяется и не копируется долгим нажатием */
+html,body,*{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+input,textarea{-webkit-user-select:text;user-select:text}
+
 /* layout: full-screen 3D canvas; overlays stacked on top: fade, subtitles, choice labels, top controls, start and end screens */
 :root{--bg:#07060a;--fg:#efe9e1;--muted:#a89f97;--gold:#d4ad55;--blood:#b8321f;--display:"Cinzel",Georgia,serif;--body:"PT Sans",system-ui,sans-serif;color-scheme:dark}
 *{box-sizing:border-box}
@@ -495,7 +499,7 @@ function liteMesh(root,S,name){let a=0,b=0;const t0=performance.now();
    out.set(res,k);ng.push({start:k,count:res.length,materialIndex:gr.materialIndex});k+=res.length;b+=res.length/3;}
   geo.setIndex(new THREE.BufferAttribute(out.slice(0,k),1));const hadG=geo.groups.length>0;geo.clearGroups();if(hadG)ng.forEach(g=>geo.addGroup(g.start,g.count,g.materialIndex));});
  LITE_INFO.push([name,Math.round(a),Math.round(b),Math.round(performance.now()-t0)]);}
-const LITE_RATIO=.3,LITE_ERR=.004;
+const LITE_RATIO=.65,LITE_ERR=.0015;
 async function model(name){const buf=await bin(name);const r=await gltfL.parseAsync(buf,'');if(/_v\d+_\d+$/.test(name)){WAIT_STAGE++;prog();}const g=r.scene.children.length===1?r.scene.children[0]:r.scene;g.parent&&g.parent.remove(g);fixGlb(g,r.animations);
  if(LITE&&/_v\d+_\d+$/.test(name)){const S=await simplifier();if(S)liteMesh(g,S,name);}g.animations=r.animations;return g;}
 function parseB64(s){s=atob(s.trim());const u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return loader.parse(u.buffer,'');}
@@ -681,6 +685,18 @@ const SFX={
  drip(){if(!SND.ctx)return;const C=SND.ctx,t=C.currentTime;const o=C.createOscillator();o.type='sine';o.frequency.setValueAtTime(1900,t);o.frequency.exponentialRampToValueAtTime(700,t+.08);const g=C.createGain();env(g,t,.002,.12,.18);o.connect(g);g.connect(SND.master);const r2=C.createGain();r2.gain.value=.9;g.connect(r2);r2.connect(SND.rev);o.start(t);o.stop(t+.3);},
  whoosh(){if(!SND.ctx)return;const C=SND.ctx,t=C.currentTime;const f=noise(t,1.1,'bandpass',300,1.5,.5,null,.5);f.frequency.setValueAtTime(300,t);f.frequency.exponentialRampToValueAtTime(6000,t+1.0);},
 };
+
+/* записи вместо синтеза (Kenney, CC0; ../snd/*.mp3): монеты, звон, удар, шаги, лязг, тиканье. Пока не загрузились — прежний синтез */
+const SMPC={};let smpcLoad=false;
+function smpcInit(){if(smpcLoad||!SND.ctx)return;smpcLoad=true;['coins','clink','clang','slap','tick','tick2','step_concrete0','step_concrete1','step_concrete2','step_concrete3','step_concrete4'].forEach(n=>fetch('../snd/'+n+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((res,rej)=>SND.ctx.decodeAudioData(b,res,rej))).then(buf=>{SMPC[n]=buf;}).catch(()=>{}));}
+function smpc(n,vol,rate,t,dest){const C=SND.ctx;if(!C||!SMPC[n])return false;const s=C.createBufferSource();s.buffer=SMPC[n];s.playbackRate.value=rate||1;const g=C.createGain();g.gain.value=vol;s.connect(g);g.connect(dest||SND.master);s.start(t||0);return true;}
+{const o={...SFX};let si=0;
+ SFX.coin=()=>{smpcInit();smpc('coins',.55,1.1)||o.coin();};
+ SFX.clink=()=>{smpcInit();smpc('clink',.5,rnd(.95,1.08))||o.clink();};
+ SFX.slap=()=>{smpcInit();smpc('slap',.6)||o.slap();};
+ SFX.step=(v=.25)=>{smpcInit();smpc('step_concrete'+(si=(si+1)%5),v*1.6,rnd(.92,1.05))||o.step(v);};
+ SFX.clang=()=>{smpcInit();smpc('clang',.8,.7)||o.clang();};
+ const ot=tickAt;tickAt=function(t,alt){smpcInit();if(!smpc(alt?'tick2':'tick',.5,alt?1.05:.95,t,SND.lv.tick))ot(t,alt);};}
 
 /* ================= UI helpers ================= */
 const subState={};const cardState={};
@@ -897,7 +913,7 @@ function loadAll(){if(loading)return loading;prog();loading=(async()=>{
   if(DEBUG){buildDbg();dbgHash();}
   return true;
  }catch(e){console.error(e);$('#progTxt').style.display='block';$('#progTxt').textContent=T('Не удалось загрузить: ','Failed to load: ')+e.message;loading=null;$('#go').disabled=false;return false;}})();return loading;}
-$('#go').onclick=async()=>{audioInit();if(SND.ctx&&SND.ctx.state!=='running')SND.ctx.resume();$('#go').disabled=true;
+$('#go').onclick=async()=>{audioInit();smpcInit();if(SND.ctx&&SND.ctx.state!=='running')SND.ctx.resume();$('#go').disabled=true;
  // «Смотреть» работает сразу: если модели ещё догружаются, пролог начинается с темноты и тиканья часов
  if(!loadedOK){$('#start').hidden=true;fade('#000',1);level('tick',.6);level('sand',.12);$('#wait').hidden=false;prog();}
  const ok=await loadAll();$('#go').disabled=false;$('#wait').hidden=true;if(!ok){$('#start').hidden=false;return;}$('#start').hidden=true;started=true;go(1);};

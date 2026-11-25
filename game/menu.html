@@ -10,7 +10,7 @@
   :root { --gold:#d9b06a; --gold2:#f0d49a; --fg:#ece6dd; --muted:#a39a92; --panel:rgba(16,14,18,.86); --line:rgba(217,176,106,.35); }
   [hidden] { display:none !important; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { margin:0; height:100%; background:#0c0b0e; color:var(--fg); font:16px Inter,system-ui,sans-serif; overflow:hidden; user-select:none; }
+  html,body { margin:0; height:100%; background:#0c0b0e; color:var(--fg); font:16px Inter,system-ui,sans-serif; overflow:hidden; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
   #bg { position:fixed; inset:-4%; background:#0c0b0e url(bg_menu.jpg) center/cover no-repeat; animation:drift 40s ease-in-out infinite alternate; filter:saturate(.95); }
   @keyframes drift { from { transform:scale(1.04) translate(-1%, 0); } to { transform:scale(1.1) translate(1.5%, -1%); } }
   #shade { position:fixed; inset:0; background:linear-gradient(90deg, rgba(8,7,10,.92) 0%, rgba(8,7,10,.72) 34%, rgba(8,7,10,.15) 70%, rgba(8,7,10,0) 100%), linear-gradient(0deg, rgba(8,7,10,.6), transparent 40%); }

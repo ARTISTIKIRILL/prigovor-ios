@@ -241,6 +241,17 @@
       bone.add(m); loc.decompose(m.position, m.quaternion, m.scale);
       m.visible = true;
     }
+    // головные уборы (всё, что выше лба) были впритык к процедурной голове: у модели пышнее волосы, и фуражка
+    // сидела на макушке поверх них. Чуть шире и ниже — надета на голову.
+    const hb = headB.getWorldPosition(V()), hs = headB.getWorldScale(V()).y || 1;
+    const hats = M.acc.filter(m => m.userData.acc === 'head' && m.parent === headB && new THREE.Box3().setFromObject(m).min.y > hb.y + .11);
+    // очки-кольца рассчитаны на процедурное лицо: на модели висят у виска — прячем
+    for (const m of M.acc) if (m.userData.acc === 'head' && m.geometry && m.geometry.type === 'TorusGeometry') { m.visible = false; m.userData.accOff = true; }
+    if (hats.length) {
+      const pv = new THREE.Group(); headB.add(pv);
+      for (const m of hats) pv.add(m);
+      pv.scale.set(1.16, 1.04, 1.16); pv.position.y = -.025 / hs;
+    }
   }
 
   // каждый кадр: кости = повороты процедурных частей. Только умножение кватернионов по цепочке родителей,

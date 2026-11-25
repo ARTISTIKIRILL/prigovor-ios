@@ -280,8 +280,12 @@
     st.talk += ((talking ? 1 : 0) - st.talk) * Math.min(1, dt * 4);
     st.arms.forEach((a, i) => {
       const b = st.base[i], k = st.talk * (i === 1 ? 1 : .35);
-      a.sh.rotation.x = b.sx - k * (.35 + .2 * Math.sin(st.t * 3.1 + i));
-      a.el.rotation.x = b.ex - k * (.5 + .25 * Math.sin(st.t * 4.3 + i * 2));
+      // жест при разговоре: предплечье не поднимаем выше груди (у сидящих руки уже согнуты — кисть уходила в лицо)
+      const sh = b.sx - k * (.2 + .12 * Math.sin(st.t * 3.1 + i));
+      let el = b.ex - k * (.45 + .22 * Math.sin(st.t * 4.3 + i * 2));
+      const lim = Math.min(-1.75, b.sx + b.ex);
+      if (sh + el < lim) el = lim - sh;
+      a.sh.rotation.x = sh; a.el.rotation.x = el;
     });
   };
 })();

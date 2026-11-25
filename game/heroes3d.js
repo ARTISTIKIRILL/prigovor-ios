@@ -108,7 +108,7 @@
       const out = new Uint32Array(src.length); let k = 0; const ng = [];
       for (const gr of grs) {
         const sub = new Uint32Array(src.subarray(gr.start, gr.start + gr.count)); let res = sub;
-        if (sub.length >= 1500) { const r2 = S.simplify(sub, pa.array, 3, Math.floor(sub.length * .3 / 3) * 3, .004, ['Sparse'])[0]; if (r2.length >= 3) res = r2; }
+        if (sub.length >= 1500) { const r2 = S.simplify(sub, pa.array, 3, Math.floor(sub.length * .65 / 3) * 3, .0015, ["Sparse"])[0]; if (r2.length >= 3) res = r2; }
         out.set(res, k); ng.push([k, res.length, gr.materialIndex]); k += res.length;
       }
       geo.setIndex(new THREE.BufferAttribute(out.slice(0, k), 1)); geo.clearGroups(); if (hadG) ng.forEach(x => geo.addGroup(x[0], x[1], x[2]));

@@ -116,7 +116,7 @@ const pick = (a, r) => a[Math.floor(r() * a.length)];
 function rngOf(seed) { let s = seed; return () => (s = (s * 9301 + 49297) % 233280) / 233280; }
 function peasantM(seed, extra) {
   const r = rngOf(seed);
-  return Object.assign({ coat: pick(['#c8ae86', '#b49a78', '#d6c4a0', '#5a6a4a'], r), coatTex: r() > .4 ? 'sack' : null, shirt: pick(['#a8322b', '#d8d0b8', '#5a6a8a'], r), pants: pick(['#4a4640', '#3c3a36', '#2a3040'], r), boots: true,
+  return Object.assign({ coat: pick(['#7a6448', '#8a7458', '#5e4e3c', '#5a6a4a'], r), coatTex: r() > .4 ? 'sack' : null, shirt: pick(['#a8322b', '#d8d0b8', '#5a6a8a'], r), pants: pick(['#4a4640', '#3c3a36', '#2a3040'], r), boots: true,
     hat: r() > .5 ? 'cap' : null, hatC: pick(['#3d2c1f', '#2a2a2a', '#4a3a2a'], r), beard: pick(['full', 'moust', null, null], r), beardC: pick(['#6b4428', '#4a3220', '#9a9086'], r),
     hair: pick(['#5a3a22', '#3a2a1e', '#8a6a40', '#a9a39a'], r), hairStyle: pick(['short', 'side', 'buzz', 'bald'], r), skin: pick(['#e3b08a', '#d9a47c', '#eab894'], r),
     armPose: pick(['lap', 'knees', 'crossed', 'window'], r), eyeC: pick(['#3a2a20', '#4a5a6a', '#5a4a2a'], r) }, extra || {});
@@ -660,6 +660,7 @@ function startGame() {
 
 // ---------- погоня за Дэном ----------
 const RUNNERS = [];
+const TOUCHUI = matchMedia('(pointer: coarse)').matches;
 const CHASE = {
   state: 'idle', x: XV - .7, z: 1.5, dir: 1, speed: 0, t: 0, st: null, tries: 0,
   init() {
@@ -682,7 +683,7 @@ const CHASE = {
     const d = Math.hypot(P.x - this.x, P.z - this.z);
     if (this.state === 'idle') {
       if (gameOn && !D.on && d < 4.5 && Math.abs(P.z - 1.5) < .7) {
-        this.state = 'run'; this.dir = P.x < this.x ? 1 : -1; window.SFX && SFX.play('door'); toastMsg = 'Дэн: «Опа... Не-не-не, начальник!» — догоняй (Shift)!'; toastT = 3;
+        this.state = 'run'; this.dir = P.x < this.x ? 1 : -1; window.SFX && SFX.play('door'); toastMsg = 'Дэн бросился бежать! Догони его' + (TOUCHUI ? ' (кнопка «Бегом»)' : ' (Shift)') + ' — в конце вагона он упрётся в тупик. Тогда быстро жми ' + (TOUCHUI ? '«Схватить»' : 'E') + '.'; toastT = 5;
       }
     } else if (this.state === 'run') {
       this.speed = this.tries ? 3.5 : 3.2;
@@ -692,11 +693,11 @@ const CHASE = {
       if (d < .8) { this.state = 'corner'; this.t = 0; }
     } else if (this.state === 'corner') {
       this.t += dt;
-      if (d < 1.5) { if (!this.warn) { this.warn = true; this.t = 0; } }
-      const win = this.tries ? 2.2 : 1.4;
+      if (d < 1.5) { if (!this.warn) { this.warn = true; this.t = 0; toastMsg = 'Дэн в тупике! Хватай — ' + (TOUCHUI ? 'жми «Схватить»!' : 'жми E!'); toastT = 2.5; } }
+      const win = (this.tries ? 2.2 : 1.4) * (TOUCHUI ? 1.6 : 1);
       if (this.warn && this.t > win) {                        // не успел схватить — проскользнул мимо
         this.warn = false; this.tries++; this.state = 'run'; this.dir = -this.dir;
-        toastMsg = 'Дэн проскользнул мимо! Ещё раз — он упрётся в запертую дверь СВ.'; toastT = 2.5;
+        toastMsg = 'Не успел — Дэн проскользнул мимо! Беги за ним: в другом конце его остановит запертая дверь СВ. Подбеги и сразу хватай.'; toastT = 4.5;
         if (this.dir < 0 && this.x < XD) this.dir = 1;
       }
     }
