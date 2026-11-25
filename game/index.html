@@ -2,7 +2,16 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<script src="power.js?v=2"></script>
+<script>
+// Телефон: лёгкая графика. Без свечения и постобработки (это 3–4 лишних полноэкранных прохода),
+// без пылинок и зерна, чёткость 1:1 с экраном (не выше). Полное качество: ?hq или localStorage prig_hq=1.
+(function () {
+  let hq = /[?&]hq/.test(location.search); try { hq = hq || localStorage.getItem('prig_hq') === '1'; } catch (e) { }
+  const phone = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 900;
+  if (phone && !hq && !window.GFX) window.GFX = { bloom: false, q: 'low', dust: false, aa: true, fps: 60, prMax: 1.0, phone: true };
+})();
+</script>
+<script src="power.js?v=3"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Приговор — пролог в поезде</title>
 <style>
@@ -434,7 +443,7 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: !!(window.GFX && G
 // Чёткость: не выше 1.5 от экрана и не больше ~2.3 млн точек на кадр (на большом Retina-экране во весь экран
 // это было 4+ млн — каждая точка с девятью лампами и свечением). «Ультра» — без предела по точкам.
 function basePR() {
-  const d = Math.min(window.devicePixelRatio || 1, 1.5), px = Math.max(1, innerWidth * innerHeight);
+  const d = Math.min(window.devicePixelRatio || 1, window.GFX && GFX.prMax || 1.5), px = Math.max(1, innerWidth * innerHeight);
   const budget = window.GFX && GFX.q === 'ultra' ? 1e9 : 2.3e6;
   return Math.max(0.5, Math.min(d, Math.sqrt(budget / px))) * (window.POWER ? POWER.dyn : 1);
 }

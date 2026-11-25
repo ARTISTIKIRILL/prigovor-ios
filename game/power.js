@@ -9,7 +9,7 @@
 (function () {
   if (window.POWER) return;
   const W = window, raf0 = W.requestAnimationFrame.bind(W), now = () => performance.now();
-  const P = W.POWER = { idle: false, cover: false, dyn: 1, minDyn: 0.7, onRes: null, fps: 0 };
+  const P = W.POWER = { idle: false, cover: false, dyn: 1, minDyn: W.GFX && W.GFX.phone ? 0.55 : 0.7, onRes: null, fps: 0 };
   let lastInput = now(), blurred = false;
   const touch = () => { lastInput = now(); blurred = false; };
   ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'wheel'].forEach(e => addEventListener(e, touch, { passive: true, capture: true }));
