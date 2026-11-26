@@ -686,16 +686,24 @@ const SFX={
  whoosh(){if(!SND.ctx)return;const C=SND.ctx,t=C.currentTime;const f=noise(t,1.1,'bandpass',300,1.5,.5,null,.5);f.frequency.setValueAtTime(300,t);f.frequency.exponentialRampToValueAtTime(6000,t+1.0);},
 };
 
-/* записи вместо синтеза (Kenney, CC0; ../snd/*.mp3): монеты, звон, удар, шаги, лязг, тиканье. Пока не загрузились — прежний синтез */
+/* записи вместо синтеза (Kenney и OpenGameArt, всё CC0; ../snd/*.mp3): монеты, звон, удар, шаги, лязг, тиканье, ворона, капли, скрежет, механизм часов, перемотка, шёпот, свист, стук колёс. Пока не загрузились — прежний синтез */
 const SMPC={};let smpcLoad=false;
-function smpcInit(){if(smpcLoad||!SND.ctx)return;smpcLoad=true;['coins','clink','clang','slap','tick','tick2','step_concrete0','step_concrete1','step_concrete2','step_concrete3','step_concrete4'].forEach(n=>fetch('../snd/'+n+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((res,rej)=>SND.ctx.decodeAudioData(b,res,rej))).then(buf=>{SMPC[n]=buf;}).catch(()=>{}));}
-function smpc(n,vol,rate,t,dest){const C=SND.ctx;if(!C||!SMPC[n])return false;const s=C.createBufferSource();s.buffer=SMPC[n];s.playbackRate.value=rate||1;const g=C.createGain();g.gain.value=vol;s.connect(g);g.connect(dest||SND.master);s.start(t||0);return true;}
+function smpcInit(){if(smpcLoad||!SND.ctx)return;smpcLoad=true;['coins','clink','clang','slap','tick','tick2','step_concrete0','step_concrete1','step_concrete2','step_concrete3','step_concrete4','caw','caw2','drip','scrape','grind','rewind','whisper','whoosh','clack'].forEach(n=>fetch('../snd/'+n+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((res,rej)=>SND.ctx.decodeAudioData(b,res,rej))).then(buf=>{SMPC[n]=buf;}).catch(()=>{}));}
+function smpc(n,vol,rate,t,dest,rev){const C=SND.ctx;if(!C||!SMPC[n])return false;const s=C.createBufferSource();s.buffer=SMPC[n];s.playbackRate.value=rate||1;const g=C.createGain();g.gain.value=vol;s.connect(g);g.connect(dest||SND.master);if(rev&&SND.rev){const r2=C.createGain();r2.gain.value=rev;g.connect(r2);r2.connect(SND.rev);}s.start(t||0);return true;}
 {const o={...SFX};let si=0;
  SFX.coin=()=>{smpcInit();smpc('coins',.55,1.1)||o.coin();};
  SFX.clink=()=>{smpcInit();smpc('clink',.5,rnd(.95,1.08))||o.clink();};
  SFX.slap=()=>{smpcInit();smpc('slap',.6)||o.slap();};
  SFX.step=(v=.25)=>{smpcInit();smpc('step_concrete'+(si=(si+1)%5),v*1.6,rnd(.92,1.05))||o.step(v);};
  SFX.clang=()=>{smpcInit();smpc('clang',.8,.7)||o.clang();};
+ SFX.caw=()=>{smpcInit();const C=SND.ctx;if(!C||!SMPC.caw){o.caw();return;}const t=C.currentTime;smpc('caw',.55,rnd(.95,1.05),t,null,.4);smpc('caw2',.45,rnd(.9,1),t+.42,null,.4);smpc('caw',.35,.92,t+.9,null,.5);};
+ SFX.drip=()=>{smpcInit();smpc('drip',.5,rnd(.9,1.15),0,null,.6)||o.drip();};
+ SFX.scrape=(dur)=>{smpcInit();smpc('scrape',.55,.75/Math.max(.3,dur||.6),0,null,.3)||o.scrape(dur);};
+ SFX.grind=(dur)=>{smpcInit();smpc('grind',.6,1.63/Math.max(.8,dur||1.5),0,null,.3)||o.grind(dur);};
+ SFX.rewind=()=>{smpcInit();smpc('rewind',.6,1,0,null,.5)||o.rewind();};
+ SFX.whisper=(dur)=>{smpcInit();smpc('whisper',.45,2.66/Math.max(1.5,dur||2.6),0,null,.8)||o.whisper(dur);};
+ SFX.whoosh=()=>{smpcInit();smpc('whoosh',.5,rnd(.85,.95),0,null,.3)||o.whoosh();};
+ const oc=clack;clack=function(t){smpcInit();if(!(smpc('clack',.5,.5,t,SND.lv.train)&&smpc('clack',.2,.62,t+.01,SND.lv.train)))oc(t);};
  const ot=tickAt;tickAt=function(t,alt){smpcInit();if(!smpc(alt?'tick2':'tick',.5,alt?1.05:.95,t,SND.lv.tick))ot(t,alt);};}
 
 /* ================= UI helpers ================= */

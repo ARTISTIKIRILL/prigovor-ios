@@ -1,0 +1,14 @@
+Все звуки — лицензия CC0 (общественное достояние, можно использовать в любой игре, в том числе платной, без указания автора).
+
+Kenney (kenney.nl): RPG Audio, Casino Audio, Impact Sounds, Interface Sounds —
+  blip, chime, lily, alarm, hit, miss, card*, click, unlock*, door*, buff, bell, win, clack, step_*, coins, clink, clang, slap, tick*.
+
+OpenGameArt.org (CC0):
+  caw, caw2 — «Crow caw», «Crow»
+  drip — «Water Drops»
+  grind — «Stone Door»
+  scrape — «Scrapes»
+  rewind, whoosh — «Wind, hit, time morph» (qubodup)
+  whisper — «Dialog vocal samples» (склеено из коротких шёпотов)
+  sand — «Sand spell»
+  rumble — «underwater or space engine rumble» (deep_rumble, кольцо 20 с)

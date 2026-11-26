@@ -1,4 +1,4 @@
-// Звук: короткие эффекты и шаги — записи из пакетов Kenney (CC0, файлы snd/*.mp3), фоновый гул — синтез WebAudio.
+// Звук: эффекты и шаги — записи из пакетов Kenney и OpenGameArt (все CC0, файлы snd/*.mp3), фоновый гул — запись rumble.mp3 по кругу.
 // Пока записи не загрузились (или файла нет) — играет прежний синтезированный вариант. Кнопка выключения.
 (function () {
   let ctx = null, master = null, amb = null, muted = false;
@@ -25,7 +25,17 @@
     const src = ctx.createBufferSource(); src.buffer = noiseBuf(4, true); src.loop = true;
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 110; lp.Q.value = .5;
     const g = ctx.createGain(); g.gain.value = 0; src.connect(lp); lp.connect(g); g.connect(master); src.start();
-    amb = { g, next: ctx.currentTime + .5 };
+    amb = { g, src, lp, next: ctx.currentTime + .5 };
+  }
+  // как только запись гула загрузилась — она вместо синтезированного шума (края mp3 обрезаны, чтобы круг был без щелчка)
+  function ambRec() {
+    if (!amb || amb.rec || !SMP.rumble) return;
+    const s = ctx.createBufferSource(); s.buffer = SMP.rumble; s.loop = true;
+    s.loopStart = .06; s.loopEnd = SMP.rumble.duration - .06;
+    const k = ctx.createGain(); k.gain.value = .4; amb.lp.frequency.value = 420;   // .4 — по громкости как прежний синтез
+    s.connect(k); k.connect(amb.lp); s.start(0, .06);
+    try { amb.src.stop(); } catch (e) { }
+    amb.rec = s;
   }
   function clack(t, vol) {
     const s = ctx.createBufferSource(); s.buffer = noiseBuf(.08, false);
@@ -65,7 +75,7 @@
     win: () => [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(f, .35, 'triangle', .1), i * 110))
   };
   // ---------- записи ----------
-  const SMP = {}, SMP_LIST = ['blip', 'chime', 'lily', 'alarm', 'hit', 'miss', 'card', 'card2', 'click', 'unlock', 'unlock2', 'door', 'door2', 'buff', 'bell', 'win', 'clack'];
+  const SMP = {}, SMP_LIST = ['blip', 'chime', 'lily', 'alarm', 'hit', 'miss', 'card', 'card2', 'click', 'unlock', 'unlock2', 'door', 'door2', 'buff', 'bell', 'win', 'clack', 'sand', 'rumble'];
   ['wood', 'carpet', 'concrete', 'snow'].forEach(s => { for (let i = 0; i < 5; i++) SMP_LIST.push('step_' + s + i); });
   let smpLoading = false;
   function loadSamples() {
@@ -95,7 +105,8 @@
     buff: () => smp('buff', .5),
     bell: () => smp('bell', .35, .8, 0, 3500),
     horn: () => smp('bell', .22, .55, 0, 1600),    // вокзал: далёкий станционный колокол вместо синтезированного гудка
-    win: () => smp('win', .6)
+    win: () => smp('win', .6),
+    sand: () => smp('sand', .5, .85)       // песочные часы: шорох песка
   };
   window.SFX = { play(n) { try { if (!(REC[n] && REC[n]())) { if (FX[n]) FX[n](); } } catch (e) {} } };
   function setMute(m) {
@@ -115,10 +126,10 @@
     const loc = window.WORLD ? WORLD.cur : 'train';
     const playing = typeof gameOn !== 'undefined' && gameOn && !(typeof sandOn !== 'undefined' && sandOn) && !(document.getElementById('fight') || {}).classList?.contains('on');
     const inTrain = playing && loc === 'train';
-    ambience();
+    ambience(); ambRec();
     amb.g.gain.setTargetAtTime(inTrain ? .07 : (playing ? (loc === 'boat' ? .05 : .025) : 0), ctx.currentTime, .4);
     // пароход: рында раз в полминуты; вокзал: далёкий гудок
-    if (playing && !inTrain && !muted) { amb.ev = (amb.ev || ctx.currentTime + 6); if (ctx.currentTime > amb.ev) { (loc === 'boat' ? FX.bell : FX.horn)(); amb.ev = ctx.currentTime + 25 + Math.random() * 20; } }
+    if (playing && !inTrain && !muted) { amb.ev = (amb.ev || ctx.currentTime + 6); if (ctx.currentTime > amb.ev) { window.SFX.play(loc === 'boat' ? 'bell' : 'horn'); amb.ev = ctx.currentTime + 25 + Math.random() * 20; } }
     if (inTrain && ctx.currentTime > amb.next - .1) {
       const t = Math.max(ctx.currentTime, amb.next);
       // «ту-дук»: запись удара металла, приглушённая и пониженная; без записи — синтез
