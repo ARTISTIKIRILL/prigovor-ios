@@ -199,6 +199,20 @@
       aim(fa, hd, left.clone().multiplyScalar(-k * .95).addScaledVector(fwd, -.38).addScaledVector(up, .28));
     }
   }
+  // Смотритель (MPFB): клип не двигает ноги, и в позе покоя колени согнуты вперёд, таз выдвинут — «куриные» ноги.
+  // Ставим ноги прямо: бедро и голень — строго вниз, стопы чуть врозь.
+  function straightLegs(B, root) {
+    root.updateMatrixWorld(true);
+    const q = root.getWorldQuaternion(new THREE.Quaternion());
+    const left = new THREE.Vector3(1, 0, 0).applyQuaternion(q), fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(q), down = new THREE.Vector3(0, -1, 0);
+    for (const [s, k] of [['Left', 1], ['Right', -1]]) {
+      const ul = B[s + 'UpLeg'], lg = B[s + 'Leg'], ft = B[s + 'Foot'], toe = B[s + 'ToeBase'];
+      if (!ul || !lg || !ft) continue;
+      aim(ul, lg, down.clone().addScaledVector(left, k * .04));
+      aim(lg, ft, down.clone().addScaledVector(fwd, -.02));
+      if (toe) aim(ft, toe, fwd.clone().addScaledVector(down, .45));
+    }
+  }
   async function attach(n, seated) {
     const id = MODEL[n.id.replace(/^b_/, '')];
     if (!id) return;
@@ -247,7 +261,9 @@
       sit(B, holder);
     } else {
       g.position.y = -b2.min.y;
-      if (id === 'warden') handsBehind(B, holder);
+      if (id === 'warden') { straightLegs(B, holder); handsBehind(B, holder);
+        // ноги стали длиннее — ставим стопы на пол по кости стопы
+        if (B.LeftFoot) { n.st.root.updateMatrixWorld(true); const fp = new THREE.Vector3(); B.LeftFoot.getWorldPosition(fp); holder.worldToLocal(fp); g.position.y += .085 - fp.y; } }
     }
     if (window.UPRIGHT) UPRIGHT(B, holder, seated ? { lean: .1 } : null);
     n.model3d = holder;

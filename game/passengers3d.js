@@ -259,7 +259,7 @@
     // головные уборы (всё, что выше лба) были впритык к процедурной голове: у модели пышнее волосы, и фуражка
     // сидела на макушке поверх них. Чуть шире и ниже — надета на голову.
     const hb = headB.getWorldPosition(V()), hs = headB.getWorldScale(V()).y || 1;
-    const hats = M.acc.filter(m => m.userData.acc === 'head' && m.parent === headB && (m.userData.hat || new THREE.Box3().setFromObject(m).min.y > hb.y + .11));
+    const hats = M.acc.filter(m => m.userData.acc === 'head' && m.parent === headB && !m.userData.kerchief && (m.userData.hat || new THREE.Box3().setFromObject(m).min.y > hb.y + .11));
     // очки-кольца рассчитаны на процедурное лицо: на модели висят у виска — прячем
     for (const m of M.acc) if (m.userData.acc === 'head' && m.geometry && m.geometry.type === 'TorusGeometry') { m.visible = false; m.userData.accOff = true; }
     // маска-полусфера была меньше лица модели: пряталась внутри головы, наружу торчали края у ушей
@@ -285,6 +285,24 @@
     }
     // клобук монаха был впритык к маленькой процедурной голове: на модели висел чёрным пятном за затылком.
     // Надеваем крупнее и чуть вперёд, свои волосы модели под ним прячем
+    // косынка: процедурная была мала для головы модели и торчала «капюшоном» вокруг лица.
+    // Своя — плотно по черепу модели (лоб открыт), узел на затылке; волосы модели под ней прячем
+    const kers = M.acc.filter(m => m.userData.kerchief && m.parent === headB);
+    if (kers.length) {
+      const mat = kers[0].material;
+      for (const m of kers) { m.visible = false; m.userData.accOff = true; }
+      const pv = new THREE.Group(); headB.add(pv); pv.scale.setScalar(1 / hs);
+      const box = new THREE.Box3().setFromObject(M.g); const top = box.max.y, hy = hb.y;
+      const cy = Math.max(.06, Math.min(.12, (top - hy) * .45));
+      const R = Math.max(.1, Math.min(.125, (top - hy) * .5 + .005));
+      // сфера без передней нижней части: открыты лицо и лоб до линии волос
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(R, 24, 14, 0, Math.PI * 2, 0, 1.75), mat);
+      cap.rotation.x = -.5; cap.position.set(0, cy, -.018); pv.add(cap);
+      const knot = new THREE.Mesh(new THREE.SphereGeometry(R * .32, 12, 8), mat); knot.scale.set(1.3, .8, .8); knot.position.set(0, cy - R * .55, -R * .95); pv.add(knot);
+      for (const sd of [-1, 1]) { const tail = new THREE.Mesh(new THREE.BoxGeometry(R * .35, R * .9, .008), mat); tail.position.set(sd * R * .18, cy - R * 1.0, -R * 1.0); tail.rotation.set(.25, 0, sd * .25); pv.add(tail); }
+      pv.children.forEach(m => { m.material.side = THREE.DoubleSide; m.userData.acc = 'head'; });
+      M.g.traverse(o => { if (o.isMesh && /hair/i.test(o.name + ' ' + ((o.material && o.material.name) || ''))) o.visible = false; });
+    }
     if (hoods.length) {
       // свой клобук по голове модели: колпак на макушку и затылок с вырезом для лица + наметка до плеч
       const mat = hoods[0].material;

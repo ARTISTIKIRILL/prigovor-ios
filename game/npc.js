@@ -195,7 +195,7 @@
         M(cyl(.1, .115, .13, 20), hc, 0, .3, 0, head); M(cyl(.117, .117, .03, 20), mat('#1e140c', { rough: .7 }), 0, .2, 0, head);
         M(boxg(.03, .012, .2), mat('#2a1c10'), 0, .3, 0, head);
       } break;
-      case 'kerchief': { const k = M(sph(.122, 18, 12, 0, Math.PI * .6), hc, 0, .08, -.02, head); k.scale.set(1, 1.1, 1.05); k.rotation.x = -.6; M(cyl(.09, .13, .14, 14), hc, 0, .02, -.035, head).scale.z = .6; } break;
+      case 'kerchief': { const k = M(sph(.122, 18, 12, 0, Math.PI * .6), hc, 0, .08, -.02, head); k.scale.set(1, 1.1, 1.05); k.rotation.x = -.6; const k2 = M(cyl(.09, .13, .14, 14), hc, 0, .02, -.035, head); k2.scale.z = .6; k.userData.kerchief = k2.userData.kerchief = true; } break;
       case 'crown': { const gm = mat(o.hatC || '#d8b060', { metal: .9, rough: .25 }); M(cyl(.118, .118, .05, 20), gm, 0, .2, 0, head); for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; const p = M(new THREE.ConeGeometry(.018, .06, 4), gm, Math.cos(a) * .115, .23, Math.sin(a) * .115, head); } } break;
       case 'ushanka': { const _uh0 = head.children.length; // меховая шапка-ушанка: купол, отворот спереди, уши опущены
         const fur = mat(o.hatC || '#4a3a2c', { rough: 1 }), top = mat(o.hatTop || '#2a2a30', { rough: .9 });

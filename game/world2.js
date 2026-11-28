@@ -687,7 +687,8 @@
         const lifeM = new THREE.MeshStandardMaterial({ map: lifeT, roughness: .7 });
         [[-16.4, 3.12, 0], [-16.4, -3.12, Math.PI], [11, 3.12, 0], [11, -3.12, Math.PI]].forEach(([x, z, r]) => { const lr = new THREE.Mesh(new THREE.TorusGeometry(.3, .07, 10, 24), lifeM); lr.position.set(BX + x, y0 + .7, z + (z > 0 ? .1 : -.1)); lr.rotation.y = r; G.add(lr); });
       }
-      lamp(L, G, BX - 15.6, 2.2, 0, { post: true, i: .8, d: 6 }); lamp(L, G, BX + 11, 2.2, 0, { post: true, i: .7, d: 6 });
+      // фонари кормы и носа — на стене надстройки (раньше стояли на столбах посреди палубы без всякой причины)
+      lamp(L, G, BX - 13.85, 2.15, 1.4, { i: .8, d: 6 }); lamp(L, G, BX + 6.85, 2.15, 1.4, { i: .7, d: 6 });
       const rope = new THREE.Mesh(new THREE.TorusGeometry(.32, .08, 8, 20), M('#a08a60', { r: 1 })); rope.rotation.x = Math.PI / 2; rope.position.set(BX - 16.2, y0 + .08, 2.2); G.add(rope);
       cyl(G, .35, .45, .7, iron, BX + 10, y0 + .35, 0, 16); BL({ x: BX + 10, z: 0 });
       // гребные колёса по бортам
@@ -817,6 +818,7 @@
       const sit = (x, z, face, sy) => ({ x, z, face, seatY: sy || .45, pose: 'sit' });
       const chair = (x, z, ry, yy) => { box(G, .42, .05, .42, M('#5a3a22', { r: .6 }), x, yy + .43, z); box(G, .42, .45, .05, M('#5a3a22', { r: .6 }), x - Math.sin(ry) * .2, yy + .68, z - Math.cos(ry) * .2); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => box(G, .04, .43, .04, M('#3a2414', {}), x + a * .18, yy + .21, z + b * .18)); };
       chair(BX - 5.62, -1, Math.PI / 2, DY['1']); chair(BX - 4.38, -1, -Math.PI / 2, DY['1']); chair(BX - 5, -1.62, 0, DY['1']); chair(BX - 5, -.38, Math.PI, DY['1']); chair(BX - 9.5, -2.1, 0, 0);
+      chair(BX + 3, 1.6, 0, DY['1']);   // кресло капитана за столом (сидел в воздухе)
       const LK = {
         lykov: { coat: '#1a2436', pants: '#1a2436', buttons: true, belt: '#1a1a1a', hat: 'clerk', hatC: '#18202e', beard: 'full', beardC: '#c8c2b6', hair: '#bdb6aa', skin: '#e2b08e', heavy: true, boots: true, eyeC: '#46586a' },
         stepan: { coat: '#3a3430', coatTex: 'sack', pants: '#2a2622', boots: true, hair: '#2a1e16', hairStyle: 'messy', skin: '#b88a66', prop: 'shovel' },
