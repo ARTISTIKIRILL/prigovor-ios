@@ -3,7 +3,8 @@
 <head>
 <script src="../gfx.js"></script>
 <meta charset="utf-8">
-<script src="../power.js?v=1"></script>
+<script src="../posture.js?v=2"></script>
+<script src="../power.js?v=4"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Катсцена «Приговор»</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=PT+Sans:wght@400;700&display=swap">
@@ -84,7 +85,7 @@ canvas{display:block;width:100%;height:100%}
   </div>
   <div class="screen" id="end" hidden>
     <h1>Первое <span>из ста</span></h1>
-    <p id="endTxt">Дальше — купе 3–4 вагона Б, поезд 2008 года.</p>
+    <p id="endTxt">Палата отправляет тебя из 1738 года в 2008-й: поезд, вагон Б, купе 3–4.</p>
     <div class="menu">
       <button class="main" id="play" type="button">Играть</button>
       <button id="again" type="button">Послушать другой приговор</button>
@@ -135,11 +136,11 @@ const VERDICT={
  forger:{read:['Тибо Лис. Чеканка фальшивых крон.','Tibo Lis. Minting false crowns.'],ans:['Фальшивых? Вы бы сравнили с казёнными.','False? You should compare them with the treasury’s.'],rep:['Сравним. У вас будет время.','We shall. You will have time.'],y2008:['2008 · Шулер, плут','2008 · Card sharp, rogue']},
 };
 const UI={
- start:['Пролог. Палата Милосердия зачитывает приговор четверым. Смотреть со звуком.','Prologue. The Chamber of Mercy reads the sentence of four. Best with sound on.'],
+ start:['Пролог. 1738 год. Палата Милосердия зачитывает приговор четверым. Смотреть со звуком.','Prologue. The Chamber of Mercy reads the sentence of four. Best with sound on.'],
  go:['Смотреть','Watch'],size:['Героев загрузим после нажатия: около 100 МБ, на телефоне это может занять минуту.','The heroes load after you press Watch: about 100 MB, which can take a minute on a phone.'],load:['Загружаю героев…','Loading the heroes…'],ready:['Готово','Ready'],
  skip:['Пропустить ›','Skip ›'],sndOn:['Звук: вкл','Sound: on'],sndOff:['Звук: выкл','Sound: off'],
  rot:['Поверните телефон горизонтально','Turn your phone sideways'],
- endT:['Дальше — купе 3–4 вагона Б, поезд 2008 года.','Next: compartment 3–4, carriage B, a train in 2008.'],
+ endT:['Палата отправляет тебя из 1738 года в 2008-й: поезд, вагон Б, купе 3–4.','The Chamber sends you from 1738 to 2008: a train, carriage B, compartment 3–4.'],
  again:['Послушать другой приговор','Hear another sentence'],restart:['С начала','From the start'],
  train:['Купе 3–4, вагон Б · 23:00','Compartment 3–4, carriage B · 11:00 PM'],train2:['Поезд, 2008 год','A train, 2008'],
 };
@@ -411,9 +412,9 @@ class GuardM{constructor(h){this.h=h;this.root=h.root;this._w=false;}get walking
 // the Warden as a real 3D model: keeps the old interface (root, walking, yawT, pitch, setUnroll, seal, headPos),
 // takes the scroll from the primitive Warden and holds it with both hands (IK)
 class WardenM{constructor(h,old){this.h=h;this.root=h.root;this._w=false;this.old=old;
-  const sc=old.scroll;h.root.add(sc);this.sy=1.13*h.h/1.78;sc.position.set(0,this.sy,.36*h.h/1.78);this.scroll=sc;this.seal=old.seal;
+  const sc=old.scroll;h.root.add(sc);this.sy=1.13*h.h/1.78;sc.position.set(0,this.sy,.31*h.h/1.78);this.scroll=sc;this.seal=old.seal;
   scene.remove(old.root);
-  h.ik.L.fn=()=>sc.localToWorld(V(.19,.0,0));h.ik.R.fn=()=>sc.localToWorld(V(-.19,.0,0));h.ik.L.w=h.ik.L.wt=h.ik.R.w=h.ik.R.wt=1;}
+  h.ik.L.fn=()=>sc.localToWorld(V(.245,-.015,-.02));h.ik.R.fn=()=>sc.localToWorld(V(-.245,-.015,-.02)); /* запястья за торцами свитка: пальцы обхватывают валики, а не проходят сквозь них */h.ik.L.w=h.ik.L.wt=h.ik.R.w=h.ik.R.wt=1;}
  setUnroll(u){this.old.setUnroll(u);}get unroll(){return this.old.unroll;}
  get walking(){return this._w;}set walking(v){if(v!==this._w){this._w=v;this.h.setWalk(v);}}
  get yawT(){return this.h.yawT;}set yawT(v){this.h.yawT=v;}
@@ -510,6 +511,7 @@ function prog(){const p=clamp(LOADED/TOTAL,0,1);$('#prog').style.width=(p*100).t
 addEventListener('error',e=>{if(!loadedOK&&!$('#wait').hidden)$('#waitTxt').textContent=T('Ошибка: ','Error: ')+(e.message||e.type);});
 addEventListener('unhandledrejection',e=>{if(!loadedOK&&!$('#wait').hidden)$('#waitTxt').textContent=T('Ошибка: ','Error: ')+((e.reason&&e.reason.message)||e.reason);});
 const MESHNAMES={};
+const UPR=window.makePosture?window.makePosture(THREE):null;
 class Hero{
  constructor(id,g,idle,walk,height,alts){
   this.id=id;this.model=g;this.root=new THREE.Group();this.root.add(g);scene.add(this.root);
@@ -537,8 +539,10 @@ class Hero{
   if(this.sway){this.model.rotation.z=Math.sin(t*1.6)*.035;this.model.rotation.y=Math.sin(t*.8)*.06;}else{this.model.rotation.z=0;this.model.rotation.y=0;}
   this.root.updateMatrixWorld(true);
   idleArm(this,wwRaw);
+  if(window.__dbgH)(window.__H=window.__H||{})[this.id]=this;
+  if(UPR&&!window.__noUPR)UPR(this.bones,this.root,ww>.01?{lean:.16,back:-.02}:null); // осанка: без лишнего наклона вперёд (../posture.js)
   this.pitch+=(this.pitchT-this.pitch)*(1-Math.exp(-dt*4));
-  if(Math.abs(this.pitch)>1e-3){_q.setFromAxisAngle(XA,this.pitch*.5*PITCH_SIGN);this.bones.Neck&&this.bones.Neck.quaternion.multiply(_q);this.bones.Head&&this.bones.Head.quaternion.multiply(_q);}
+  if(Math.abs(this.pitch)>1e-3){_q.setFromAxisAngle(XA,this.pitch*.32*PITCH_SIGN); /* поклон головой мягче — без «Добби» */this.bones.Neck&&this.bones.Neck.quaternion.multiply(_q);this.bones.Head&&this.bones.Head.quaternion.multiply(_q);}
   for(const s of ['L','R']){const k=this.ik[s];const sp=this.ikSpeed*dt;k.w+=clamp(k.wt-k.w,-sp,sp);if(k.w>.002&&k.fn){const pre=s==='L'?'Left':'Right';const ch=[this.bones[pre+'Arm'],this.bones[pre+'ForeArm']];const eff=this.bones[pre+'Hand'];if(ch[0]&&ch[1]&&eff){const q0=ch.map(b=>b.quaternion.clone());ccd(ch,eff,k.fn(),8);ch.forEach((b,i)=>{const qi=b.quaternion.clone();b.quaternion.copy(q0[i]).slerp(qi,ease(k.w));});}}}
   this.palmUp=(this.palmUp||0)+((this.palmUpT||0)-(this.palmUp||0))*Math.min(1,dt*5);if(this.palmUp>.01&&this.bones.RightHand)this.bones.RightHand.rotateY(Math.PI*this.palmUp);
   this.root.updateMatrixWorld(true);
@@ -688,7 +692,8 @@ const SFX={
 
 /* записи вместо синтеза (Kenney и OpenGameArt, всё CC0; ../snd/*.mp3): монеты, звон, удар, шаги, лязг, тиканье, ворона, капли, скрежет, механизм часов, перемотка, шёпот, свист, стук колёс. Пока не загрузились — прежний синтез */
 const SMPC={};let smpcLoad=false;
-function smpcInit(){if(smpcLoad||!SND.ctx)return;smpcLoad=true;['coins','clink','clang','slap','tick','tick2','step_concrete0','step_concrete1','step_concrete2','step_concrete3','step_concrete4','caw','caw2','drip','scrape','grind','rewind','whisper','whoosh','clack'].forEach(n=>fetch('../snd/'+n+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((res,rej)=>SND.ctx.decodeAudioData(b,res,rej))).then(buf=>{SMPC[n]=buf;}).catch(()=>{}));}
+function sndBuf(base,n){const b=window.__SNDB&&window.__SNDB[n];if(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return Promise.resolve(u.buffer);}return fetch(base+n+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject());}
+function smpcInit(){if(smpcLoad||!SND.ctx)return;smpcLoad=true;['coins','clink','clang','slap','tick','tick2','step_concrete0','step_concrete1','step_concrete2','step_concrete3','step_concrete4','caw','caw2','drip','scrape','grind','rewind','whisper','whoosh','clack'].forEach(n=>sndBuf('../snd/',n).then(b=>new Promise((res,rej)=>SND.ctx.decodeAudioData(b,res,rej))).then(buf=>{SMPC[n]=buf;}).catch(()=>{}));}
 function smpc(n,vol,rate,t,dest,rev){const C=SND.ctx;if(!C||!SMPC[n])return false;const s=C.createBufferSource();s.buffer=SMPC[n];s.playbackRate.value=rate||1;const g=C.createGain();g.gain.value=vol;s.connect(g);g.connect(dest||SND.master);if(rev&&SND.rev){const r2=C.createGain();r2.gain.value=rev;g.connect(r2);r2.connect(SND.rev);}s.start(t||0);return true;}
 {const o={...SFX};let si=0;
  SFX.coin=()=>{smpcInit();smpc('coins',.55,1.1)||o.coin();};
@@ -709,7 +714,12 @@ function smpc(n,vol,rate,t,dest,rev){const C=SND.ctx;if(!C||!SMPC[n])return fals
 /* ================= UI helpers ================= */
 const subState={};const cardState={};
 const now=()=>performance.now()/1000;
-function showSub(who,ru,en,dur){Object.assign(subState,{who,ru,en,until:now()+dur});$('#subs .who').textContent=who?T(...who):'';$('#subs .who').style.display=who?'inline-block':'none';$('#subs .line').textContent=T(ru,en);$('#subs').style.opacity=1;}
+/* озвучка пролога: те же нейроголоса, что в игре (../vo/<FNV-1a от «голос|текст»>.mp3, пишет tools/voice/build.py) */
+const VO_HERO={knight:'rowen',gravedigger:'miron',nun:'agata',forger:'tibo'};let voAu=null;
+function voKey(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0;}return('0000000'+h.toString(16)).slice(-8);}
+function voPlay(who,ru){try{if(!SND.on||!ru)return;let vid=null;if(who===WARDEN)vid='smotritel';else if(who){for(const k in NAMES)if(NAMES[k][0]===who[0])vid=VO_HERO[k];}if(!vid)return;
+ if(!voAu)voAu=new Audio();voAu.pause();voAu.src='../vo/'+voKey(vid+'|'+ru)+'.mp3';voAu.volume=.95;const p=voAu.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}}
+function showSub(who,ru,en,dur){voPlay(who,ru);Object.assign(subState,{who,ru,en,until:now()+dur});$('#subs .who').textContent=who?T(...who):'';$('#subs .who').style.display=who?'inline-block':'none';$('#subs .line').textContent=T(ru,en);$('#subs').style.opacity=1;}
 function hideSub(){subState.ru=null;$('#subs').style.opacity=0;}
 function setCard(ru,en,ru2,en2,cls=''){Object.assign(cardState,{ru,en,ru2,en2,cls});const c=$('#card');c.className=cls;c.querySelector('.big').textContent=T(ru,en);c.querySelector('.small').textContent=ru2?T(ru2,en2):'';}
 function cardOp(v){$('#card').style.opacity=v;if(v<=0)cardState.ru=null;}
@@ -825,7 +835,7 @@ SH[14]={dur:4.6,enter(){setLoc('clock');const h=chosen(),g=H.executioner;h.root.
   if(t>1.5)once('acc',()=>{hg.gearMul=4;hg.vspeed=1.6;});if(t>=3.0&&!S.flipped){S.flipped=true;hg.flip.rotation.x=0;S.sandT0=t;SFX.clang();SFX.rewind();hg.waveT=0;S.shake=.07;hg.gearMul=7;hg.vspeed=4;hg.vbase=.7;hg.rewind=1.3;}
   if(S.flipped){const e=t-S.sandT0;setSand(1-e*.03,e*.03,true,e);}
   setCam(V(124.9,1.75,-4.9),V(121.1,1.9,-.6),44);}};
-SH[15]={dur:4,enter(){setLoc('clock');const h=chosen(),g=H.executioner;h.root.visible=g.root.visible=true;h.root.position.set(120,0,-2.0);h.root.rotation.y=h.yawT=0;h.setWalk(false);g.root.position.set(122.62,0,-1.35);g.root.rotation.y=g.yawT=-.25;g.setWalk(false);coin.visible=false;g.ik.R.fn=()=>hg.knob.getWorldPosition(V());g.ik.R.w=g.ik.R.wt=1;hg.lever.rotation.x=-.6;hg.flip.rotation.x=0;level('sand',.5,.8);level('hum',.4);const V9=VERDICT[S.hero];setCard(...V9.y2008,null,null,'dossier');cardOp(0);},
+SH[15]={dur:4,enter(){setLoc('clock');const h=chosen(),g=H.executioner;h.root.visible=g.root.visible=true;h.root.position.set(120,0,-2.0);h.root.rotation.y=h.yawT=0;h.setWalk(false);g.root.position.set(122.62,0,-1.35);g.root.rotation.y=g.yawT=-.25;g.setWalk(false);coin.visible=false;g.ik.R.fn=()=>hg.knob.getWorldPosition(V());g.ik.R.w=g.ik.R.wt=1;hg.lever.rotation.x=-.6;hg.flip.rotation.x=0;level('sand',.5,.8);level('hum',.4);const V9=VERDICT[S.hero];setCard('1738 → 2008','1738 → 2008',V9.y2008[0].replace(/^2008 — /,''),V9.y2008[1].replace(/^2008 — /,''),'dossier');   /* герой из 1738 года — кем Палата сделает его в 2008-м */cardOp(0);},
  update(t){const e=.5+t;setSand(1-e*.03,e*.03,true,e);const h=chosen();const hh=h.head();const u=ease(t/4);setCam(V(120+lerp(.32,.2,u),hh.y+lerp(.02,0,u),lerp(-1.15,-1.35,u)),hh.clone().add(V(0,-.04,0)),lerp(34,28,u));
   hg.glow.visible=false;cardOp(ease(seg(t,1.1,1.8)));bloom.strength=lerp(.6,1.8,ease(seg(t,2.6,4)));fade('#fff',ease(seg(t,3.3,4)));if(t>3.1)once('w',()=>SFX.whoosh());}};
 SH[16]={dur:4.2,enter(){fade('#fff',1);level('sand',0,.3);level('hum',0,.3);level('tick',0,.2);level('choir',0,.2);setCard(...UI.train,...UI.train2,'');cardOp(0);},

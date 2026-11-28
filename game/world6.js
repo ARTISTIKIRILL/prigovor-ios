@@ -174,7 +174,7 @@
       };
       L.np = {
         rowenP: N('rowenP', sit(-4.6, -17.9, '+z', .5), LK.rowenP),
-        rowenC: N('rowenP', sit(-19.6, .3, '+x', .55), LK.rowenP),
+        rowenC: N('rowenP', sit(-19.6, .3, '+z', .56), LK.rowenP),
         rowenS: N('rowenP', stand(-8, 10.6, '+z'), LK.rowenP),
         lukash: N('lukash', stand(16.2, -1.0, '-x'), LK.lukash),
         lukashC: N('lukash', stand(-6.0, -10.6, '+z'), LK.lukash),

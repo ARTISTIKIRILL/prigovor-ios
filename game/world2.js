@@ -830,12 +830,12 @@
         lykovB: N('lykov', standAt(BX + 8.6, .9, '+x'), Object.assign({ handsBehind: true }, LK.lykov), 1),
         stepanA: N('stepan', standAt(BX - 1.5, 0, '+x'), LK.stepan, -1),
         stepanC: N('stepan', standAt(BX + .4, -1.4, '-x'), Object.assign({}, LK.stepan, { prop: 'bag' }), 1),
-        okunevA: N('okunev', sit(BX - 5.25, -2.5, '+z', .56), LK.okunev, 0),
+        okunevA: N('okunev', sit(BX - 5.25, -2.7, '+z', .56), LK.okunev, 0),
         okunevB: N('okunev', standAt(BX - 16.1, 0, '+x'), Object.assign({ handsBehind: true }, LK.okunev), 0),
         braginA: N('bragin', sit(BX - 5, -1.62, '+z'), Object.assign({ armPose: 'lap' }, LK.bragin), 1),
         braginB: N('bragin', standAt(BX - 15.1, 1.3, '-x'), Object.assign({ handsBehind: true }, LK.bragin), 0),
         lidia: N('lidia', standAt(BX - 8.1, -1.25, '+x'), LK.lidia, 1),
-        koch: N('koch', sit(BX - 1.75, -2.5, '+z', .56), LK.koch, 0)
+        koch: N('koch', sit(BX - 1.75, -2.7, '+z', .56), LK.koch, 0)
       };
       L.np.lykovB.hidden = true; L.np.stepanC.hidden = true; L.np.okunevB.hidden = true; L.np.braginB.hidden = true;
       [['lidia', BX - 8.1, -1.25, 1], ['lykovB', BX + 8.6, .9, 1], ['stepanA', BX - 1.5, 0, -1]].forEach(([k, x, z, lv]) => BL({ x, z, k, lv }));
@@ -853,7 +853,7 @@
       X(standAt(BX - 13.1, -2.4, '+x'), { coat: '#f2efe8', pants: '#2a2a2a', apron: true, hair: '#3a2a20', beard: 'moust', skin: '#e8b996' }, 0, 'buffet', 'Буфетчик');
       X(sit(BX - 9.5, -2.1, '+z'), richM(sd, { prop: 'cup' }), 0, 'rich', 'Пассажир в буфете');
       X(standAt(BX + 12.2, 1.8, '-x'), { coat: '#1e2a3e', pants: '#1e2a3e', hat: 'cap', hatC: '#1e2a3e', beard: 'trim', skin: '#d8a47c' }, 0, 'sailor', 'Матрос');
-      X(sit(BX + 5.25, 2.5, '-z', .56), peasantM(sd, { sleep: true }), 0, 'sleeper', 'Спящий пассажир');
+      X(sit(BX + 5.25, 2.7, '-z', .56), peasantM(sd, { sleep: true }), 0, 'sleeper', 'Спящий пассажир');
       // ---------- проходимые области ----------
       const W = [];
       // нижняя палуба

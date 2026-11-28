@@ -166,8 +166,9 @@
       // ---- каюты: двухъярусные койки, столик, фотографии
       const cabins = [[-8.25, blanket, 'bobrov'], [-4.75, blanket2, 'nina'], [-1.25, blanket, 'seva'], [2.25, blanket2, 'kuz']];
       cabins.forEach(([c, bl]) => {
-        for (const y of [.45, 1.45]) { box(G, 2.0, .1, .75, woodD, X(c - .35), y, 3.55); box(G, 1.9, .12, .65, bl, X(c - .35), y + .1, 3.55); box(G, .35, .1, .55, white, X(c - 1.15), y + .2, 3.55); }
-        for (const dx of [-1.32, .62]) box(G, .07, 1.7, .07, woodD, X(c + dx), .85, 3.2);
+        // верхняя полка на 1.62 (была 1.45): сидящий внизу не упирается в неё головой
+        for (const y of [.45, 1.62]) { box(G, 2.0, .1, .75, woodD, X(c - .35), y, 3.55); box(G, 1.9, .12, .65, bl, X(c - .35), y + .1, 3.55); box(G, .35, .1, .55, white, X(c - 1.15), y + .2, 3.55); }
+        for (const dx of [-1.32, .62]) box(G, .07, 1.9, .07, woodD, X(c + dx), .95, 3.2);
         box(G, .6, .05, .5, woodL, X(c + 1.15), .72, 1.4); cyl(G, .03, .03, .7, woodD, X(c + 1.15), .36, 1.4, 6);
         lamp(L, G, X(c + .6), 2.35, 2.4, { r: .06, i: .45, d: 3.6, c: '#ffcf90', hex: 0xffcf90 });
         const ph = new THREE.Mesh(new THREE.PlaneGeometry(.16, .2), M('#a8a090', { r: .6 })); ph.position.set(X(c + .9), 1.35, 3.88); ph.rotation.y = Math.PI; G.add(ph);
@@ -323,13 +324,13 @@
         reshetovW: N('reshetov', stand(10.4, 8.5, '-z'), LK.reshetov),
         tkach: N('tkach', sit(6.4, -2.8, '-z'), LK.tkach),
         tkachM: N('tkach', stand(-5.2, -2.0, '-x'), LK.tkach),
-        nina: N('nina', sit(-4.2, 3.0, '-x'), LK.nina),
+        nina: N('nina', sit(-4.6, 3.42, '-z', .6), LK.nina),
         ninaM: N('nina', stand(-7.0, -1.45, '-z'), LK.nina),
-        seva: N('seva', sit(-.6, 3.2, '-x'), LK.seva),
+        seva: N('seva', sit(-1.0, 3.42, '-z', .6), LK.seva),
         sevaP: N('seva', stand(-12.6, 11.2, '-x'), LK.seva),
         taras: N('taras', stand(1.6, -2.85, '-z'), LK.taras),
         kuzmich: N('kuzmich', stand(-3.3, 10.4, '-x'), LK.kuzmich),
-        kuzmichL: N('kuzmich', sit(2.9, 3.0, '-x'), LK.kuzmich),
+        kuzmichL: N('kuzmich', sit(2.5, 3.42, '-z', .6), LK.kuzmich),
         vera: N('vera', stand(11.6, 10.6, '-z'), LK.vera),
         veraM: N('vera', sit(-6.0, -1.75, '-z'), LK.vera),
         bobrov: N('bobrov', sit(-7.7, 1.85, '+x'), Object.assign({ prop: 'paper' }, LK.bobrov)),

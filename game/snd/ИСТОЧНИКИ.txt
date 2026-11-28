@@ -12,3 +12,7 @@ OpenGameArt.org (CC0):
   whisper — «Dialog vocal samples» (склеено из коротких шёпотов)
   sand — «Sand spell»
   rumble — «underwater or space engine rumble» (deep_rumble, кольцо 20 с)
+
+Переделка 27.11 (звуки эпохи вместо электронных): blip — handleSmallLeather, chime — bookFlip2, unlock — metalLatch,
+unlock2 — creak2, click — metalClick (RPG Audio); lily/buff/win — impactBell_heavy с другой высотой, thud — impactWood_heavy,
+alarm — impactMetal_heavy, hit — impactPunch_heavy (Impact Sounds); miss — qubodup swosh (OpenGameArt). Всё CC0.

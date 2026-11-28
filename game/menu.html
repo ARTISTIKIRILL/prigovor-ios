@@ -80,7 +80,7 @@ const G = window.GFX, P = G.PRESETS;
 const QN = { low:'Низкая', medium:'Средняя', high:'Высокая', ultra:'Ультра', custom:'Своя' };
 function save() {
   G.q = detect();
-  const o = { q:G.q, scale:G.scale, aa:G.aa, bloom:G.bloom, dust:G.dust, fps:G.fps, people:G.people, v:2 };
+  const o = { q:G.q, scale:G.scale, aa:G.aa, bloom:G.bloom, dust:G.dust, fps:G.fps, people:G.people, v:3 };
   try { localStorage.setItem('prigovor_gfx', JSON.stringify(o)); } catch (e) {}
 }
 function detect() {

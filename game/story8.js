@@ -120,8 +120,8 @@
           { t: '(Нужно больше: приказ, четыре личных дела, Евсей, Зоя, графиня)', go: 'need', if: '!n_trueOk', hide: 'n_need' }] },
         need: { lines: [['det', null, 'Чтобы остановить Часы без катастрофы, нужны приказ из крепости, все четыре личных дела, летописец Евсей, спасённая Зоя и графиня с чертежом отца.']], set: ['n_need'], go: 'pick' },
         kKeeper: { lines: [], set: ['n_solved'], do: 'noonEnd:endKeeper' },
-        kBroken: { lines: [], set: ['n_solved'], do: 'noonEnd:endBroken' },
-        kTrue: { lines: [], set: ['n_solved'], do: 'noonEnd:endTrue' },
+        kBroken: { lines: [], set: ['n_solved'], do: 'noonBattle:endBroken' },
+        kTrue: { lines: [], set: ['n_solved'], do: 'noonBattle:endTrue' },
         solved: { lines: [['king', 'smile', '…']], end: true }
       }
     },

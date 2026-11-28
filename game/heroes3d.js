@@ -222,7 +222,17 @@
       });
       const mx = new THREE.AnimationMixer(g);
       const a = mx.clipAction(clip); a.play(); a.time = Math.random() * clip.duration;
+      mx.__post = () => { if (n.__h3 && n.__h3.walk) n.__h3.blend(); if (window.UPRIGHT) UPRIGHT(B, holder, seated ? { lean: .1 } : null); if (n.__pose) n.__pose(B, holder); };   // выпрямить спину после клипа; кино: ходьба и удары
       MIXERS.push(mx);
+      n.__h3 = { B, holder, mx, idle: a };
+      // кино: фигура героя ходит своим клипом ходьбы (вес — от скорости актёра), а не скользит стоя
+      if (n.film && !seated && id !== 'warden') model(id + '_walk').then(wg => {
+        const wc0 = wg && wg.animations[0]; if (!wc0) return;
+        const wc = wc0.clone(); wc.tracks = wc.tracks.filter(tr => !(/Hips$/.test(tr.name.split('.')[0]) && tr.name.endsWith('.position')));
+        const wa = mx.clipAction(wc); wa.play(); wa.setEffectiveWeight(0);
+        const h = n.__h3; h.walk = wa; h.w = 0;
+        h.blend = () => { const sp = (n.st.film && n.st.film.speed) || 0, tw = Math.min(1, sp * 1.2); h.w += (tw - h.w) * .25; wa.setEffectiveWeight(h.w); a.setEffectiveWeight(1 - h.w); wa.timeScale = Math.max(.6, Math.min(1.8, sp || 1)); };
+      }).catch(() => { });
     }
     g.updateMatrixWorld(true);
     const b2 = new THREE.Box3().setFromObject(g);
@@ -239,6 +249,7 @@
       g.position.y = -b2.min.y;
       if (id === 'warden') handsBehind(B, holder);
     }
+    if (window.UPRIGHT) UPRIGHT(B, holder, seated ? { lean: .1 } : null);
     n.model3d = holder;
     if (window.Passengers3D && Passengers3D.blob) Passengers3D.blob(n.st.root, seated);
   }
@@ -247,7 +258,7 @@
   (function loop(t) {
     const dt = Math.min(.05, (t - last) / 1000); last = t;
     // спрятанных (другая локация, не в кадре сюжета) не анимируем — к финалу их десятки
-    for (const mx of MIXERS) { let o = mx.getRoot(), v = true; for (; o; o = o.parent) if (!o.visible) { v = false; break; } if (v) mx.update(dt); }
+    for (const mx of MIXERS) { let o = mx.getRoot(), v = true; for (; o; o = o.parent) if (!o.visible) { v = false; break; } if (v) { mx.update(dt); if (mx.__post) mx.__post(); } }
     requestAnimationFrame(loop);
   })(last);
 
@@ -273,7 +284,7 @@
       TP.aIdle = m.idle ? TP.mixer.clipAction(lockRoot(m.idle)) : null;
       TP.aWalk = m.walk ? TP.mixer.clipAction(lockRoot(m.walk)) : null;
       if (TP.aIdle) TP.aIdle.play();
-      TP.walking = false; TP.body = holder; TP.id = id;
+      TP.walking = false; TP.body = holder; TP.id = id; TP.B = bones(g);
     } catch (e) { console.warn('модель героя не загрузилась', e); }
     TP.loading = false;
   }
@@ -303,7 +314,7 @@
   // вызывается из tick() игры после установки камеры от первого лица
   function thirdPerson(dt, moving, run, eye) {
     const show = TP.on && !(typeof D !== 'undefined' && D.on);
-    if (TP.mixer) TP.mixer.update(dt);
+    if (TP.mixer) { TP.mixer.update(dt); if (TP.body && TP.B && window.UPRIGHT) UPRIGHT(TP.B, TP.body, TP.walking ? { lean: .12 } : null); }
     if (!TP.body) { if (TP.on) ensureBody(); return; }
     if (TP.id !== MODEL[S.hero]) ensureBody();
     TP.body.visible = show;
@@ -332,7 +343,7 @@
   }
 
   window.Heroes3D = {
-    SIT_BACK: -0.11,
+    SIT_BACK: -0.03,   // было −0.11: спины героев уходили в спинку скамейки
     station(L, sm) {
       if (sm) attach(sm, false);
       (L.bench || []).forEach(n => attach(n, true));

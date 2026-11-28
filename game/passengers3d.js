@@ -229,13 +229,28 @@
     // смещение головы: процедурная голова → кость головы модели
     const dHead = headB.getWorldPosition(V()).sub(st.head.getWorldPosition(V()));
     const dChest = chestB.getWorldPosition(V()).sub(st.torso.localToWorld(new THREE.Vector3(0, .45, 0)));
+    // поворот головы модели относительно процедурной головы: маски и очки висели у уха, если в момент переноса
+    // головы смотрели в разные стороны (у симметричных шляп это не видно). Доворачиваем аксессуар вокруг головы.
+    const eH = M.map.find(e => e.b === headB);
+    const dq = Q();
+    if (eH) {
+      const hW = M.holder.getWorldQuaternion(Q()), hInv = hW.clone().invert();
+      const cur = headB.getWorldQuaternion(Q()).premultiply(hInv);              // поворот кости в осях holder
+      const face3 = hW.clone().multiply(cur).multiply(eH.ref.clone().invert()); // куда смотрит лицо модели
+      dq.copy(face3).multiply(st.head.getWorldQuaternion(Q()).invert());
+    }
+    const hP = st.head.getWorldPosition(V()), bP = headB.getWorldPosition(V());
     for (const m of M.acc) {
       const kind = m.userData.acc;
       if (kind === 'root') continue;
       const bone = kind === 'head' ? headB : chestB;
       m.updateMatrixWorld(true);
       const w = m.matrixWorld.clone();
-      w.elements[12] += (kind === 'head' ? dHead : dChest).x; w.elements[13] += (kind === 'head' ? dHead : dChest).y; w.elements[14] += (kind === 'head' ? dHead : dChest).z;
+      if (kind === 'head') {
+        const p = V(), q = Q(), sc = V(); w.decompose(p, q, sc);
+        p.sub(hP).applyQuaternion(dq).add(bP); q.premultiply(dq);
+        w.compose(p, q, sc);
+      } else { w.elements[12] += dChest.x; w.elements[13] += dChest.y; w.elements[14] += dChest.z; }
       bone.updateMatrixWorld(true);
       const loc = new THREE.Matrix4().copy(bone.matrixWorld).invert().multiply(w);
       bone.add(m); loc.decompose(m.position, m.quaternion, m.scale);
@@ -244,13 +259,47 @@
     // головные уборы (всё, что выше лба) были впритык к процедурной голове: у модели пышнее волосы, и фуражка
     // сидела на макушке поверх них. Чуть шире и ниже — надета на голову.
     const hb = headB.getWorldPosition(V()), hs = headB.getWorldScale(V()).y || 1;
-    const hats = M.acc.filter(m => m.userData.acc === 'head' && m.parent === headB && new THREE.Box3().setFromObject(m).min.y > hb.y + .11);
+    const hats = M.acc.filter(m => m.userData.acc === 'head' && m.parent === headB && (m.userData.hat || new THREE.Box3().setFromObject(m).min.y > hb.y + .11));
     // очки-кольца рассчитаны на процедурное лицо: на модели висят у виска — прячем
     for (const m of M.acc) if (m.userData.acc === 'head' && m.geometry && m.geometry.type === 'TorusGeometry') { m.visible = false; m.userData.accOff = true; }
+    // маска-полусфера была меньше лица модели: пряталась внутри головы, наружу торчали края у ушей
+    const masks = M.acc.filter(m => m.userData.mask && m.parent === headB);
+    if (masks.length) {
+      const pv = new THREE.Group(); headB.add(pv);
+      for (const m of masks) pv.add(m);
+      pv.scale.set(1.2, 1.1, 1.38); pv.position.set(0, -.004 / hs, .012 / hs);
+    }
+    // закрытый шлем был уже головы модели: лицо проступало сквозь переднюю стенку («чёрный ящик с лицом»)
+    const helm = M.acc.filter(m => m.userData.helm && m.parent === headB);
+    if (helm.length) {
+      const pv = new THREE.Group(); headB.add(pv);
+      for (const m of helm) pv.add(m);
+      pv.scale.set(1.34, 1.14, 1.46); pv.position.set(0, -.03 / hs, .012 / hs);
+      M.g.traverse(o => { if (o.isMesh && /hair/i.test(o.name + ' ' + ((o.material && o.material.name) || ''))) o.visible = false; });
+    }
+    const hoods = M.acc.filter(m => m.userData.hood && m.parent === headB);
     if (hats.length) {
       const pv = new THREE.Group(); headB.add(pv);
-      for (const m of hats) pv.add(m);
+      for (const m of hats) if (!m.userData.hood && !m.userData.helm) pv.add(m);
       pv.scale.set(1.16, 1.04, 1.16); pv.position.y = -.025 / hs;
+    }
+    // клобук монаха был впритык к маленькой процедурной голове: на модели висел чёрным пятном за затылком.
+    // Надеваем крупнее и чуть вперёд, свои волосы модели под ним прячем
+    if (hoods.length) {
+      // свой клобук по голове модели: колпак на макушку и затылок с вырезом для лица + наметка до плеч
+      const mat = hoods[0].material;
+      for (const m of hoods) { m.visible = false; m.userData.accOff = true; }
+      const pv = new THREE.Group(); headB.add(pv); pv.scale.setScalar(1 / hs);
+      // центр черепа над костью головы: по высоте макушки модели
+      const box = new THREE.Box3().setFromObject(M.g); const top = box.max.y, hy = hb.y;
+      const cy = Math.max(.07, Math.min(.13, (top - hy) * .5));
+      const R = Math.max(.105, Math.min(.135, (top - hy) * .55 + .01));
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(R, 22, 14, Math.PI / 2 + .85, Math.PI * 2 - 1.7, 0, 1.95), mat);
+      cap.position.set(0, cy, -.012); pv.add(cap);
+      const drape = new THREE.Mesh(new THREE.CylinderGeometry(R * .98, R * 1.45, .26, 20, 1, true, Math.PI / 2 + .95, Math.PI * 2 - 1.9), mat);
+      drape.position.set(0, cy - R * .38 - .13, -.03); pv.add(drape);
+      [cap, drape].forEach(m => { m.material.side = THREE.DoubleSide; m.userData.acc = 'head'; });
+      M.g.traverse(o => { if (o.isMesh && /hair/i.test(o.name + ' ' + ((o.material && o.material.name) || ''))) o.visible = false; });
     }
   }
 

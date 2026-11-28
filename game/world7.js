@@ -143,11 +143,11 @@
       const N = (id, place, look, lv, opt) => addNPC(id, place, look, Object.assign({ loc: 'noon', lv: lv || 0, fy: DY[String(lv || 0)] }, opt || {}));
       const sit = (x, z, face, sy) => ({ x: X(x), z, face, seatY: sy || .45, pose: 'sit' });
       const stand = (x, z, face) => standAt(X(x), z, face);
-      const whiteG = { coat: '#f4f2ec', pants: '#e8e4dc', boots: true, buttons: true, belt: '#d8b060', hat: 'greathelm', hair: 'none', skin: '#e8c8a8', handsBehind: true };
+      const whiteG = { coat: '#f4f2ec', pants: '#e8e4dc', boots: true, buttons: true, belt: '#d8b060', hat: 'greathelm', helmCol: '#d8dce2', hair: 'none', skin: '#e8c8a8', handsBehind: true };
       L.np = {
         king: N('king', sit(0, -10.75, '+z', 1.3), { coat: '#f8f6f0', skirt: '#f8f6f0', pants: '#f8f6f0', shoes: true, belt: '#d8b060', stole: '#d8b060', hat: 'crown', hatC: '#d8b060', hair: '#d8d0c0', hairStyle: 'side', beard: 'trim', beardC: '#d8d0c0', skin: '#f0dcc8', eyeC: '#6a8aa8' }),
         whiteCap: N('whiteCap', stand(2.6, 9, '-x'), Object.assign({}, whiteG, { hat: null, hair: '#6a6258', hairStyle: 'buzz', beard: 'moust', beardC: '#6a6258' })),
-        medic: N('medic', stand(-11, 6, '+x'), { coat: '#2a2a32', lapels: true, pants: '#2a2a2a', shoes: true, hair: '#8a8478', hairStyle: 'side', skin: '#e8c8b0', glasses: true }),
+        medic: N('medic', stand(-9.3, 5.6, '-x'), { coat: '#2a2a32', lapels: true, pants: '#2a2a2a', shoes: true, hair: '#8a8478', hairStyle: 'side', skin: '#e8c8b0', glasses: true }),
         smotritelN: N('smotritelN', stand(-10.5, -9, '-x'), { coat: '#f4f1ea', pants: '#e8e4da', buttons: true, belt: '#c9a35a', stole: '#d9b46a', hair: '#ece8e2', hairStyle: 'side', beard: 'trim', beardC: '#efebe5', glasses: true, skin: '#f1d0b8', handsBehind: true }),
         margaretN: N('margaretN', stand(-2.6, 11.8, '+x'), { female: true, coat: '#1a0e12', skirt: '#140a0e', hair: '#141012', hairStyle: 'bun', skin: '#f8eeec', lips: '#8a1420' })
       };
@@ -228,6 +228,8 @@
     if (a === 'toNoon') { startScene('toNoon'); return true; }
     if (a === 'goNoon') { closeDialog(); enterLoc('noon'); return true; }
     if (a.startsWith('noonEnd:')) { S.f.gameDone = true; startScene(a.slice(8)); return true; }
+    // разбить или остановить Часы — сначала бой с гвардией и Королём (battle.js), потом концовка
+    if (a.startsWith('noonBattle:')) { closeDialog(); if (window.BATTLE && BATTLE.start) BATTLE.start(a.slice(11)); else { S.f.gameDone = true; startScene(a.slice(11)); } return true; }
     if (a === 'noonGallery') {
       const Ls = [[null, null, 'Шесть портретов, шесть государей: 1690, 1740, 1790, 1850, 1910, 1960. Парик, треуголка, корона, мундир, фрак, белое.'], [null, null, 'И одно лицо. Одни глаза, одна родинка у брови. Ни морщиной старше.']];
       Ls.push(['det', null, 'Это не династия. Это один человек — триста лет.']);

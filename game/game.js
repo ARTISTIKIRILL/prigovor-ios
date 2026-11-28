@@ -61,7 +61,7 @@ function showBuff(text, neg, hero) {
   buffEl.querySelector('.bi').textContent = neg ? '✕' : u.ic;
   buffEl.querySelector('.bt2').innerHTML = (text || u.def) + '<small>' + (neg ? 'слабость героя' : 'умение героя') + '</small>';
   buffEl.classList.toggle('neg', !!neg);
-  buffEl.classList.add('on'); window.SFX && SFX.play(neg ? 'miss' : 'buff');
+  buffEl.classList.add('on'); window.SFX && SFX.play(neg ? 'thud' : 'buff');
   clearTimeout(buffT); buffT = setTimeout(() => buffEl.classList.remove('on'), 2800);
 }
 function heroOfCond(c) { const m = /(^|[&|])hero:(\w+)/.exec(c || ''); return m ? m[2] : null; }

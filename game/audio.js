@@ -75,12 +75,14 @@
     win: () => [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(f, .35, 'triangle', .1), i * 110))
   };
   // ---------- записи ----------
-  const SMP = {}, SMP_LIST = ['blip', 'chime', 'lily', 'alarm', 'hit', 'miss', 'card', 'card2', 'click', 'unlock', 'unlock2', 'door', 'door2', 'buff', 'bell', 'win', 'clack', 'sand', 'rumble'];
+  const SMP = {}, SMP_LIST = ['blip', 'chime', 'lily', 'alarm', 'hit', 'miss', 'card', 'card2', 'click', 'unlock', 'unlock2', 'door', 'door2', 'buff', 'bell', 'win', 'clack', 'sand', 'rumble', 'thud', 'rewind'];
   ['wood', 'carpet', 'concrete', 'snow'].forEach(s => { for (let i = 0; i < 5; i++) SMP_LIST.push('step_' + s + i); });
   let smpLoading = false;
+  // ПК-версия без сервера (file://) не может fetch — там звуки лежат base64 в snd/b64.js (window.__SNDB)
+  function sndBuf(base,n){const b=window.__SNDB&&window.__SNDB[n];if(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return Promise.resolve(u.buffer);}return fetch(base+n+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject());}
   function loadSamples() {
     if (smpLoading || !ctx) return; smpLoading = true;
-    SMP_LIST.forEach(n => fetch('snd/' + n + '.mp3').then(r => r.ok ? r.arrayBuffer() : Promise.reject()).then(b => new Promise((res, rej) => ctx.decodeAudioData(b, res, rej))).then(buf => { SMP[n] = buf; }).catch(() => { }));
+    SMP_LIST.forEach(n => sndBuf('snd/', n).then(b => new Promise((res, rej) => ctx.decodeAudioData(b, res, rej))).then(buf => { SMP[n] = buf; }).catch(() => { }));
   }
   function smp(n, vol, rate, when, lp) {
     if (!ctx || muted || !SMP[n]) return false;
@@ -92,10 +94,12 @@
   const rnd = (a, b) => a + Math.random() * (b - a);
   // эффект → запись (если не загрузилась — синтез из FX)
   const REC = {
-    blip: () => smp('blip', .18, rnd(.95, 1.05)),
-    chime: () => smp('chime', .55),
-    lily: () => smp('lily', .6, .9),
-    alarm: () => smp('alarm', .5),
+    // звуки эпохи вместо электронных «бипов»: шорох, страница блокнота, колокольчик, удар по дереву, металл
+    blip: () => smp('blip', .1, rnd(.92, 1.08)),          // реплика: тихий шорох (голос и так звучит)
+    chime: () => smp('chime', .75, rnd(.95, 1.05)),       // улика: перелистнули блокнот
+    lily: () => smp('lily', .5) && (setTimeout(() => smp('lily', .32, 1.12), 260), true),   // лилия: два удара колокольчика
+    alarm: () => smp('alarm', .6),                        // заметили: лязг металла
+    thud: () => smp('thud', .6, rnd(.9, 1.05)),           // неудача: глухой удар
     hit: () => smp('hit', .8, rnd(.9, 1.1)),
     miss: () => smp('miss', .7, rnd(.9, 1.05)),
     card: () => smp(Math.random() < .5 ? 'card' : 'card2', .7, rnd(.95, 1.08)),
@@ -105,8 +109,8 @@
     buff: () => smp('buff', .5),
     bell: () => smp('bell', .35, .8, 0, 3500),
     horn: () => smp('bell', .22, .55, 0, 1600),    // вокзал: далёкий станционный колокол вместо синтезированного гудка
-    win: () => smp('win', .6),
-    sand: () => smp('sand', .5, .85)       // песочные часы: шорох песка
+    win: () => smp('win', .55) && (setTimeout(() => smp('win', .4, .97), 1500), true),   // дело раскрыто: колокол, два удара
+    sand: () => smp('rewind', .6, .8) && (smp('sand', .4, .7), true)    // откат: время сворачивается и сыплется песок
   };
   window.SFX = { play(n) { try { if (!(REC[n] && REC[n]())) { if (FX[n]) FX[n](); } } catch (e) {} } };
   function setMute(m) {

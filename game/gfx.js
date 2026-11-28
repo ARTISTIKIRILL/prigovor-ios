@@ -4,7 +4,7 @@
   var DEF = { q: 'high', scale: 1, aa: true, bloom: true, dust: true, fps: 60, people: true };
   var PRESETS = {
     low:    { scale: 0.6,  aa: false, bloom: false, dust: false, fps: 30, people: false },
-    medium: { scale: 0.75, aa: true,  bloom: false, dust: false, fps: 60, people: true },
+    medium: { scale: 0.75, aa: true,  bloom: false, dust: false, fps: 30, people: true },
     high:   { scale: 1.0,  aa: true,  bloom: true,  dust: true,  fps: 60, people: true },
     ultra:  { scale: 1.35, aa: true,  bloom: true,  dust: true,  fps: 0, people: true }
   };
@@ -16,7 +16,12 @@
     var phone = /Android|iPhone|iPad/i.test(navigator.userAgent);
     if (phone && g.scale === 0.8 && g.bloom === true && g.aa === false) { g.scale = 0.75; g.aa = true; g.bloom = false; g.dust = false; g.q = 'medium'; }
     g.v = 2;
-    try { localStorage.setItem('prigovor_gfx', JSON.stringify({ q: g.q, scale: g.scale, aa: g.aa, bloom: g.bloom, dust: g.dust, fps: g.fps, people: g.people, v: 2 })); } catch (e) { }
+  }
+  // v3: телефон грелся — «Средняя» и «Низкая» теперь 30 к/с (60 можно вернуть в «Своя»)
+  if (g.v !== 3) {
+    if (/Android|iPhone|iPad/i.test(navigator.userAgent) && (g.q === 'medium' || g.q === 'low') && g.fps === 60) g.fps = 30;
+    g.v = 3;
+    try { localStorage.setItem('prigovor_gfx', JSON.stringify({ q: g.q, scale: g.scale, aa: g.aa, bloom: g.bloom, dust: g.dust, fps: g.fps, people: g.people, v: 3 })); } catch (e) { }
   }
   g.PRESETS = PRESETS;
   // множитель чёткости: применяется к devicePixelRatio, который выбирает игра

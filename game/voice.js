@@ -24,7 +24,7 @@
     stop();
     if (!on || !KEYS.size || typeof text !== 'string') return;
     const k = keyOf(who, text);
-    if (!KEYS.has(k)) return;
+    if (!KEYS.has(k)) { const ms = window.__vmiss || (window.__vmiss = []); if (ms.length < 1500) ms.push([who, text]); return; }   // список немых реплик — для дозаписи
     au.src = 'vo/' + k + '.mp3'; au.volume = vol;
     const p = au.play(); if (p && p.catch) p.catch(() => { });
   }

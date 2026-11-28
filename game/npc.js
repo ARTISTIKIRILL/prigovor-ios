@@ -146,9 +146,12 @@
     if (o.mask === 'harlequin') {
       if (!window.__hqTex) { const c = document.createElement('canvas'); c.width = 128; c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#140f12'; g.fillRect(0, 0, 128, 128);
         for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) { const cx = x * 32 + (y % 2) * 16, cy = y * 32; g.fillStyle = '#6e1a20'; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + 16, cy + 16); g.lineTo(cx, cy + 32); g.lineTo(cx - 16, cy + 16); g.fill(); g.strokeStyle = '#c9a24a'; g.lineWidth = 2; g.stroke(); }
+        // прорези для глаз (полоса маски — от виска до виска, глаза на 38% и 62% ширины)
+        g.globalCompositeOperation = 'destination-out'; for (const ex of [.36, .64]) { g.beginPath(); g.ellipse(ex * 128, 64, 11, 15, 0, 0, Math.PI * 2); g.fill(); } g.globalCompositeOperation = 'source-over';
         window.__hqTex = new THREE.CanvasTexture(c); window.__hqTex.encoding = THREE.sRGBEncoding; }
-      const mm = new THREE.MeshStandardMaterial({ map: window.__hqTex, roughness: .35, metalness: .2 });
-      const mk = M(new THREE.SphereGeometry(.109, 24, 16, 0, Math.PI, Math.PI * .18, Math.PI * .7), mm, 0, .085, .0, head); mk.scale.set(.94, 1.08, 1.02);
+      const mm = new THREE.MeshStandardMaterial({ map: window.__hqTex, roughness: .35, metalness: .2, alphaTest: .5, side: THREE.DoubleSide });
+      // маскарадная маска — полоса на уровне глаз (раньше полусфера закрывала всё лицо, на 3D-модели — как шлем)
+      const mk = M(new THREE.SphereGeometry(.109, 24, 6, Math.PI * .17, Math.PI * .66, Math.PI * .38, Math.PI * .2), mm, 0, .085, .0, head); mk.scale.set(.94, 1.08, 1.02); mk.userData.mask = true;
       for (const sd of [-1, 1]) M(new THREE.TorusGeometry(.021, .004, 6, 16), mat('#c9a24a', { metal: .85, rough: .3 }), sd * .036, .1, .101, head);
     }
     const _lb0 = head.children.length;
@@ -161,20 +164,21 @@
       case 'cap': M(cyl(.118, .112, .06, 18), hc, 0, .2, -.005, head); M(cyl(.11, .11, .012, 18), hc, 0, .21, .01, head); { const v = M(boxg(.16, .012, .085), mat('#1c140e'), 0, .146, .112, head); v.rotation.x = .25; } break;
       case 'clerk': case 'conductor': M(cyl(.12, .112, .07, 18), hc, 0, .215, 0, head); { const v = M(boxg(.16, .012, .08), mat('#111318', { rough: .3 }), 0, .148, .11, head); v.rotation.x = .2; } break;
       case 'police': M(cyl(.125, .112, .075, 18), hc, 0, .215, 0, head); M(cyl(.126, .126, .025, 18), mat('#8a2a2a'), 0, .2, 0, head); { const v = M(boxg(.16, .012, .085), mat('#0e121c', { rough: .3 }), 0, .148, .112, head); v.rotation.x = .2; } M(sph(.016, 8, 6), mat('#c9a35a', { metal: .8, rough: .3 }), 0, .225, .122, head); break;
-      case 'hood': { const hd2 = M(sph(.135, 18, 12, 0, Math.PI * .6), hc, 0, .085, -.035, head); hd2.scale.set(1.02, 1.1, 1.08); hd2.rotation.x = -.75; const rim = M(new THREE.TorusGeometry(.105, .018, 8, 20, Math.PI * 1.2), hc, 0, .085, .02, head); rim.rotation.set(-.35, 0, -Math.PI * .1); } break;
+      case 'hood': { const hd2 = M(sph(.135, 18, 12, 0, Math.PI * .6), hc, 0, .085, -.035, head); hd2.scale.set(1.02, 1.1, 1.08); hd2.rotation.x = -.75; const rim = M(new THREE.TorusGeometry(.105, .018, 8, 20, Math.PI * 1.2), hc, 0, .085, .02, head); rim.rotation.set(-.35, 0, -Math.PI * .1); hd2.userData.hood = rim.userData.hood = true; } break;
       case 'top': M(cyl(.098, .1, .19, 18), hc, 0, .34, 0, head); M(cyl(.17, .17, .012, 22), hc, 0, .155, 0, head); break;
       case 'bowler': { const d = M(sph(.115, 18, 10, 0, Math.PI / 2), hc, 0, .14, 0, head); d.scale.y = .9; M(cyl(.155, .155, .012, 22), hc, 0, .146, 0, head); } break;
       // облики главных героев по их 3D-моделям
-      case 'greathelm': {
-        const steel = mat('#3a3c41', { metal: .75, rough: .38 });
+      case 'greathelm': { const _gh0 = head.children.length;
+        const steel = mat(o.helmCol || '#3a3c41', { metal: .75, rough: .38 });
         const hm = M(cyl(.118, .122, .28, 22), steel, 0, .25, .0, head);
         M(sph(.118, 22, 10, 0, Math.PI * .5), steel, 0, .235, 0, head).scale.y = .35;
         M(boxg(.012, .25, .012), mat('#1a1b1e', { metal: .6, rough: .4 }), 0, .1, .121, head);
         M(boxg(.2, .02, .02), mat('#050506', { rough: 1 }), 0, .11, .114, head);
         for (const sd of [-1, 1]) { const g = M(sph(.012, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffb030 }), sd * .042, .11, .12, head); g.scale.set(1.6, .7, .5); }
         const ring = M(new THREE.TorusGeometry(.124, .012, 6, 26), mat('#8a5a24', { metal: .8, rough: .35 }), 0, .225, 0, head); ring.rotation.x = Math.PI / 2;
-        for (let i = 0; i < 9; i++) { const an = i / 9 * Math.PI * 2, sp = M(new THREE.ConeGeometry(.022, .09 + (i % 2) * .04, 5), mat('#2a2622', { metal: .6, rough: .5 }), Math.sin(an) * .118, .28 + (i % 2) * .02, Math.cos(an) * .118, head); sp.rotation.z = -Math.sin(an) * .15; sp.rotation.x = Math.cos(an) * .15; }
+        for (let i = 0; i < 9; i++) { const an = i / 9 * Math.PI * 2, sp = M(new THREE.ConeGeometry(.022, .09 + (i % 2) * .04, 5), mat(o.helmCol ? '#c9a050' : '#2a2622', { metal: .6, rough: .5 }), Math.sin(an) * .118, .28 + (i % 2) * .02, Math.cos(an) * .118, head); sp.rotation.z = -Math.sin(an) * .15; sp.rotation.x = Math.cos(an) * .15; }
         hm.renderOrder = 1;
+        for (let i = _gh0; i < head.children.length; i++) head.children[i].userData.helm = true;   // шлем целиком: на 3D-голове надевается крупнее
       } break;
       case 'nunveil': {
         const white = mat('#f2eee6', { rough: .7 }), black = mat('#121114', { rough: .65 });
@@ -193,13 +197,14 @@
       } break;
       case 'kerchief': { const k = M(sph(.122, 18, 12, 0, Math.PI * .6), hc, 0, .08, -.02, head); k.scale.set(1, 1.1, 1.05); k.rotation.x = -.6; M(cyl(.09, .13, .14, 14), hc, 0, .02, -.035, head).scale.z = .6; } break;
       case 'crown': { const gm = mat(o.hatC || '#d8b060', { metal: .9, rough: .25 }); M(cyl(.118, .118, .05, 20), gm, 0, .2, 0, head); for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; const p = M(new THREE.ConeGeometry(.018, .06, 4), gm, Math.cos(a) * .115, .23, Math.sin(a) * .115, head); } } break;
-      case 'ushanka': { // меховая шапка-ушанка: купол, отворот спереди, уши опущены
+      case 'ushanka': { const _uh0 = head.children.length; // меховая шапка-ушанка: купол, отворот спереди, уши опущены
         const fur = mat(o.hatC || '#4a3a2c', { rough: 1 }), top = mat(o.hatTop || '#2a2a30', { rough: .9 });
         M(sph(.128, 18, 12, 0, Math.PI * 2, 0, Math.PI * .5), top, 0, .1, -.005, head).scale.set(1.02, .95, 1.05);
         { const f = M(cyl(.135, .135, .07, 20), fur, 0, .165, 0, head); f.scale.z = 1.05; }
         { const b = M(boxg(.24, .07, .05), fur, 0, .17, .115, head); b.rotation.x = -.25; }
         for (const sd of [-1, 1]) { const e = M(boxg(.045, .13, .1), fur, sd * .125, .03, -.005, head); e.rotation.z = sd * .08; }
         M(boxg(.25, .05, .05), fur, 0, .09, -.12, head);
+        for (let i = _uh0; i < head.children.length; i++) head.children[i].userData.hat = true;   // вся ушанка — одна шапка (на 3D-модели растягивается целиком)
       } break;
     }
     for (let i = _accH; i < head.children.length; i++) head.children[i].userData.acc = 'head';
@@ -207,9 +212,9 @@
     const _accT = torso.children.length, _accR = root.children.length;
     // ---- предметы ----
     if (o.prop === 'paper') { const pp = M(boxg(.42, .3, .006), mat('#e8e0cc'), 0, .42, .36, torso); pp.rotation.x = -.35; M(boxg(.3, .02, .007), mat('#3a3a3a'), 0, .5, .335, torso).rotation.x = -.35; }
-    if (o.prop === 'book') { const b = M(boxg(.18, .03, .13), mat('#5a2a20'), 0, .2, .32, torso); b.rotation.x = .5; }
+    if (o.prop === 'book') { const b = M(boxg(.18, .03, .13), mat('#5a2a20'), 0, .42, .37, torso); b.rotation.x = -.9; }   // в руках на уровне груди, как газета (раньше лежал на коленях, а руки держали пустоту)
     if (o.prop === 'bread') M(sph(.05, 8, 6), mat('#a8743a'), .1, .24, .3, torso).scale.set(1.6, .8, .8);
-    if (o.prop === 'cup') { M(cyl(.03, .026, .08, 12), mat('#e8e4dc', { rough: .3 }), 0, .14, .3, torso); M(cyl(.034, .034, .02, 12), mat('#c9a35a', { metal: .7, rough: .3 }), 0, .1, .3, torso); }
+    if (o.prop === 'cup') { M(cyl(.03, .026, .08, 12), mat('#e8e4dc', { rough: .3 }), 0, .13, .27, torso); M(cyl(.034, .034, .02, 12), mat('#c9a35a', { metal: .7, rough: .3 }), 0, .09, .27, torso); }   // в ладонях на коленях
     if (o.prop === 'shovel') { const s = new THREE.Group(); s.position.set(.25, .1, .25); root.add(s); M(cyl(.016, .016, 1.1), mat('#6a4a2a'), 0, 1.1, 0, s); M(boxg(.22, .26, .02), mat('#3a3a3a', { metal: .5, rough: .5 }), 0, -.12, .03, s).rotation.x = .4; s.rotation.x = .15; }
     if (o.prop === 'cane') M(cyl(.012, .012, .9), mat('#2a1a10', { rough: .4 }), .28, .9, .18, root);
     if (o.prop === 'bag') { const bg = new THREE.Group(); bg.position.set(.32, sit ? hipY : .2, sit ? -.05 : .1); root.add(bg); M(boxg(.3, .3, .22), mat('#c8c0b0'), 0, .15, 0, bg); M(boxg(.302, .02, .222), mat('#a8322b'), 0, .1, 0, bg); M(boxg(.302, .02, .222), mat('#2a4a8a'), 0, .2, 0, bg); M(boxg(.02, .302, .222), mat('#a8322b'), .06, .15, 0, bg); }
@@ -221,7 +226,9 @@
     const base = arms.map(a => {
       if (ap === 'hold') return { sx: -.85, sy: a.sd * -.55, sz: a.sd * .08, ex: -1.3 };
       if (o.prop === 'bread' && a.sd > 0) return { sx: -.7, sz: a.sd * .1, ex: -1.6 };
-      if (ap === 'lap') return { sx: -.5, sz: a.sd * .16, ex: -1.0, sy: a.sd * -.45 };
+      // руки лежат на бёдрах (раньше предплечья висели горизонтально в 15 см над коленями); с чашкой — ладони сходятся к ней
+      if (ap === 'lap' && o.prop === 'cup') return { sx: -.3, sz: a.sd * .1, ex: -.85, sy: a.sd * -.75 };
+      if (ap === 'lap') return { sx: -.27, sz: a.sd * .13, ex: -.8, sy: a.sd * -.32 };
       if (ap === 'knees') return { sx: -.32, sz: a.sd * .1, ex: -.75 };
       if (ap === 'crossed') return { sx: -.55, sz: a.sd * .32, ex: -1.9, sy: a.sd * -.9 };
       if (o.prop === 'shovel') return { sx: -.5, sz: a.sd * .2, ex: -.6 };
